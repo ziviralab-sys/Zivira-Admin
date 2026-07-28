@@ -64,6 +64,7 @@ export type Employee = {
   territory: string;
   role: "NBH" | "BH" | "RBM" | "ZBM" | "ABM" | "SR_MR" | "MR";
   status: "ACTIVE" | "INACTIVE";
+  address?: string;
   createdAt: string;
   updatedAt: string;
 };
