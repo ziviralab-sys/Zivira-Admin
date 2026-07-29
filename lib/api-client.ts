@@ -183,6 +183,27 @@ async function request<T>(path: string, init: RequestInit = {}) {
   return payload as ApiEnvelope<T>;
 }
 
+export type PaginationInfo = { page: number; limit: number; total: number; totalPages: number };
+
+async function requestPaginated<T>(path: string, init: RequestInit = {}): Promise<{ data: T[]; pagination: PaginationInfo }> {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers
+    }
+  });
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? "API request failed");
+  }
+
+  return payload as { data: T[]; pagination: PaginationInfo };
+}
+
 export type DcrRecord = Omit<DcrExtended, "doctorId" | "samplesGiven" | "inputsGiven" | "jointWork"> & {
   doctorId?: Doctor;
   managerId?: { displayName?: string };
@@ -246,8 +267,20 @@ export const apiClient = {
     });
   },
 
-  doctors() {
-    return request<Doctor[]>("/company/doctors");
+  doctors(params?: { page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    const qs = query.toString();
+    return requestPaginated<Doctor>(`/company/doctors${qs ? `?${qs}` : ""}`);
+  },
+
+  clinicNames(params?: { page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    const qs = query.toString();
+    return requestPaginated<string>(`/company/doctors/clinics${qs ? `?${qs}` : ""}`);
   },
 
   createDoctor(input: Omit<Doctor, "id" | "tenantSlug" | "createdAt" | "updatedAt">) {

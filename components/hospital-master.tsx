@@ -1,22 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, type PaginationInfo } from "@/lib/api-client";
+import { PaginationControls } from "./pagination-controls";
+
+const PAGE_SIZE = 100;
 
 export function HospitalMaster() {
   const [clinicNames, setClinicNames] = useState<string[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+
+  function load(page = 1) {
+    apiClient.clinicNames({ page, limit: PAGE_SIZE })
+      .then((res) => { setClinicNames(res.data); setPagination(res.pagination); })
+      .catch(() => setClinicNames([]));
+  }
 
   useEffect(() => {
-    apiClient.doctors()
-      .then((res) => {
-        const seen = new Set<string>();
-        for (const doctor of res.data) {
-          const name = doctor.clinicName?.trim();
-          if (name) seen.add(name);
-        }
-        setClinicNames([...seen]);
-      })
-      .catch(() => setClinicNames([]));
+    load(1);
   }, []);
 
   return (
@@ -40,7 +41,7 @@ export function HospitalMaster() {
           <tbody>
             {clinicNames.map((name, i) => (
               <tr key={name}>
-                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{i + 1}</td>
+                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{(pagination.page - 1) * pagination.limit + i + 1}</td>
                 <td><strong>{name}</strong></td>
               </tr>
             ))}
@@ -49,6 +50,7 @@ export function HospitalMaster() {
             )}
           </tbody>
         </table>
+        <PaginationControls pagination={pagination} onPrev={() => load(pagination.page - 1)} onNext={() => load(pagination.page + 1)} />
       </div>
     </section>
   );

@@ -3,12 +3,16 @@
 import type { Doctor, Employee } from "@zivira/types";
 import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, type PaginationInfo } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
+import { PaginationControls } from "./pagination-controls";
 import { StatusBadge } from "./page-components";
+
+const PAGE_SIZE = 100;
 
 export function DoctorManager() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
@@ -26,12 +30,13 @@ export function DoctorManager() {
 
   const tabs = Array.from({ length: 24 }, (_, i) => `Tab ${i + 1}`);
 
-  async function loadDoctors() {
+  async function loadDoctors(page = 1) {
     setError("");
 
     try {
-      const [docRes, empRes] = await Promise.all([apiClient.doctors(), apiClient.employees()]);
+      const [docRes, empRes] = await Promise.all([apiClient.doctors({ page, limit: PAGE_SIZE }), apiClient.employees()]);
       setDoctors(docRes.data);
+      setPagination(docRes.pagination);
       setEmployees(empRes.data.filter((e) => e.role === "MR" || e.role === "SR_MR"));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load doctors");
@@ -72,7 +77,7 @@ export function DoctorManager() {
         ))}
       </div>
       <div className="toolbar">
-        <button className="button button-secondary" onClick={loadDoctors} type="button">
+        <button className="button button-secondary" onClick={() => loadDoctors(pagination.page)} type="button">
           <RefreshCw size={17} />
           Refresh
         </button>
@@ -172,6 +177,11 @@ export function DoctorManager() {
           </tbody>
         </table>
       </div>
+      <PaginationControls
+        pagination={pagination}
+        onPrev={() => loadDoctors(pagination.page - 1)}
+        onNext={() => loadDoctors(pagination.page + 1)}
+      />
     </>
   );
 }
