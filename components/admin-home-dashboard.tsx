@@ -25,7 +25,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getApiBaseUrl, getToken } from "@/lib/api-client";
 import { downloadCsv } from "@/lib/download-csv";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -234,12 +234,12 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
     try {
       // Uses the new POST /company/notices endpoint (requires backend patch)
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "https://zivira-labs-backend-1.onrender.com/api"}/company/notices`,
+        `${getApiBaseUrl()}/company/notices`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${window.localStorage.getItem("zivira.company.token") ?? ""}`
+            Authorization: `Bearer ${getToken() ?? ""}`
           },
           body: JSON.stringify({ title, message, audience, priority })
         }
@@ -357,9 +357,9 @@ export function AdminHomeDashboard() {
     try {
       // 1. Field force status (new endpoint)
       const ffRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "https://zivira-labs-backend-1.onrender.com/api"}/company/field-force-status`,
+        `${getApiBaseUrl()}/company/field-force-status`,
         {
-          headers: { Authorization: `Bearer ${window.localStorage.getItem("zivira.company.token") ?? ""}` }
+          headers: { Authorization: `Bearer ${getToken() ?? ""}` }
         }
       );
       if (ffRes.ok) {
@@ -369,9 +369,9 @@ export function AdminHomeDashboard() {
 
       // 2. Notices
       const noticeRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "https://zivira-labs-backend-1.onrender.com/api"}/company/notices`,
+        `${getApiBaseUrl()}/company/notices`,
         {
-          headers: { Authorization: `Bearer ${window.localStorage.getItem("zivira.company.token") ?? ""}` }
+          headers: { Authorization: `Bearer ${getToken() ?? ""}` }
         }
       );
       if (noticeRes.ok) {

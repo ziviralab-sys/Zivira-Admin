@@ -4,40 +4,24 @@ import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function ChemistMaster() {
-  const [items, setItems] = useState([
-    {
-      sNo: 13918,
-      employeeName: "THANDLAM JASWANTH REDDY",
-      employeeCode: "E0340",
-      patchName: "MADANAPALLY",
-      dealerName: "AGARWAL PHARMACY",
-      contactPerson: "Agarwal Ji",
-      phone: "9876543210",
-      email: "agarwal@pharmacy.com",
-      country: "India",
-      state: "ANDHRA PRADESH",
-      city: "MADANAPALLY",
-      location: "Main Road",
-      pincode: "517325",
-      address: "MADANAPALLY"
-    },
-    {
-      sNo: 13919,
-      employeeName: "THANDLAM JASWANTH REDDY",
-      employeeCode: "E0340",
-      patchName: "NELLORE",
-      dealerName: "NELLORE MEDICO",
-      contactPerson: "Satish Kumar",
-      phone: "9876543211",
-      email: "satish@nelloremedico.com",
-      country: "India",
-      state: "ANDHRA PRADESH",
-      city: "NELLORE",
-      location: "Gandhi Nagar",
-      pincode: "524001",
-      address: "NELLORE"
-    }
-  ]);
+  const [items, setItems] = useState<
+    Array<{
+      sNo: number;
+      employeeName: string;
+      employeeCode: string;
+      patchName: string;
+      dealerName: string;
+      contactPerson: string;
+      phone: string;
+      email: string;
+      country: string;
+      state: string;
+      city: string;
+      location: string;
+      pincode: string;
+      address: string;
+    }>
+  >([]);
 
   return (
     <section className="subdivision-console">

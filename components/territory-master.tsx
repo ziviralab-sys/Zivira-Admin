@@ -4,11 +4,15 @@ import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function TerritoryMaster() {
-  const [items, setItems] = useState([
-    { sNo: 1, employeeName: "ANIL ANJAYA", employeeCode: "E0263", patchName: "KUKATPALLY", customerName: "A JAYA CHANDRA REDDY" },
-    { sNo: 2, employeeName: "ANIL ANJAYA", employeeCode: "E0263", patchName: "BHEL - AP", customerName: "ABRITHI DHAS" },
-    { sNo: 3, employeeName: "ANIL ANJAYA", employeeCode: "E0263", patchName: "BHEL - AP", customerName: "ALEKYA GANDU" }
-  ]);
+  const [items, setItems] = useState<
+    Array<{
+      sNo: number;
+      employeeName: string;
+      employeeCode: string;
+      patchName: string;
+      customerName: string;
+    }>
+  >([]);
 
   return (
     <section className="subdivision-console">

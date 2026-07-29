@@ -17,11 +17,7 @@ export function InputMaster() {
     "LBL"
   ];
   const [activeHeader, setActiveHeader] = useState("Superpremium");
-  const [inputs, setInputs] = useState<Array<{ id: number; brandName: string; quantity: number; duration: string }>>([
-    { id: 1, brandName: "BEPIREX SAMPLE", quantity: 150, duration: "3 Months" },
-    { id: 2, brandName: "BRINZIA FLYER", quantity: 300, duration: "1 Month" },
-    { id: 3, brandName: "CIZIA VISUAL AID", quantity: 50, duration: "12 Months" }
-  ]);
+  const [inputs, setInputs] = useState<Array<{ id: number; brandName: string; quantity: number; duration: string }>>([]);
 
   return (
     <section className="subdivision-console">

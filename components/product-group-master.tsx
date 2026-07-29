@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { excelMolecules } from "@/lib/excel-mock-data";
+import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function ProductGroupMaster() {
   const [molecules, setMolecules] = useState<Array<{ moleculeName: string; therapyName: string }>>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    setMolecules(excelMolecules);
-  }, []);
 
   const filtered = molecules.filter(
     (m) =>

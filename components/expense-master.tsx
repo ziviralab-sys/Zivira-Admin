@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { excelExpenses, excelSfc } from "@/lib/excel-mock-data";
+import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function ExpenseMaster({ defaultTab = "sfc" }: { defaultTab?: string }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [sfcData, setSfcData] = useState<any[]>([]);
   const [expenseData, setExpenseData] = useState<any[]>([]);
-
-  useEffect(() => {
-    setSfcData(excelSfc);
-    setExpenseData(excelExpenses);
-  }, []);
 
   return (
     <section className="subdivision-console">

@@ -89,8 +89,18 @@ export type Subdivision = {
   updatedAt?: string;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://zivira-labs-backend-1.onrender.com/api";
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  console.warn(
+    "NEXT_PUBLIC_API_URL is not set. Set it to the backend API URL (e.g. in .env.local) — there is no fallback backend."
+  );
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const TOKEN_KEY = "zivira.company.token";
+
+export function getApiBaseUrl() {
+  return API_BASE_URL;
+}
 
 export function getToken() {
   if (typeof window === "undefined") {
@@ -179,38 +189,8 @@ export const apiClient = {
     return request<CompanyDashboard>("/company/dashboard");
   },
 
-  async employees() {
-    const data: Employee[] = [
-      {
-        id: "emp-1",
-        tenantSlug: "sandbox",
-        name: "S.SIVANESAN",
-        employeeCode: "E0004",
-        designation: "SALES MANAGER",
-        division: "ASTRA",
-        reportingManager: "",
-        territory: "HQ-1",
-        role: "MR",
-        status: "ACTIVE",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: "emp-2",
-        tenantSlug: "sandbox",
-        name: "K. MARIAPPAN",
-        employeeCode: "E0006",
-        designation: "REGIONAL BUSINESS MANAGER",
-        division: "ASTRA",
-        reportingManager: "",
-        territory: "HQ-2",
-        role: "MR",
-        status: "ACTIVE",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    return { data };
+  employees() {
+    return request<Employee[]>("/company/employees");
   },
 
   createEmployee(input: Omit<Employee, "id" | "tenantSlug" | "createdAt" | "updatedAt">) {
@@ -220,24 +200,8 @@ export const apiClient = {
     });
   },
 
-  async doctors() {
-    const data: Doctor[] = [
-      {
-        id: "doc-1",
-        tenantSlug: "sandbox",
-        name: "ANIL ANJAYA",
-        specialty: "CARDIOLOGY",
-        category: "A",
-        state: "KARNATAKA",
-        city: "BENGALURU",
-        territory: "KUKATPALLY",
-        mappedEmployeeCode: "E0263",
-        status: "ACTIVE",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    return { data };
+  doctors() {
+    return request<Doctor[]>("/company/doctors");
   },
 
   createDoctor(input: Omit<Doctor, "id" | "tenantSlug" | "createdAt" | "updatedAt">) {
@@ -297,24 +261,8 @@ export const apiClient = {
     return request<SubdivisionFieldForce[]>(`/company/fieldforce?subDivision=${encodeURIComponent(subDivision)}`);
   },
 
-  async productCategories() {
-    const data: ProductCategory[] = [
-      {
-        id: "cat-1",
-        shortName: "ANTIALLEGY",
-        categoryName: "ANTIALLEGY",
-        noOfProducts: 4,
-        status: "ACTIVE"
-      },
-      {
-        id: "cat-2",
-        shortName: "ANTI-INFECTIVE",
-        categoryName: "ANTI-INFECTIVE",
-        noOfProducts: 2,
-        status: "ACTIVE"
-      }
-    ];
-    return { data };
+  productCategories() {
+    return request<ProductCategory[]>("/company/product-categories");
   },
 
   createProductCategory(input: { shortName?: string | null; categoryName: string }) {
@@ -339,26 +287,8 @@ export const apiClient = {
     return request<ProductCategory>(`/company/product-categories/${id}/reactivate`, { method: "POST" });
   },
 
-  async productBrands() {
-    const data: ProductBrand[] = [
-      {
-        id: "brand-1",
-        shortName: "BEPIREX",
-        brandName: "BEPIREX",
-        noOfProducts: 1,
-        noOfSlides: 5,
-        status: "ACTIVE"
-      },
-      {
-        id: "brand-2",
-        shortName: "BRINZIA",
-        brandName: "BRINZIA",
-        noOfProducts: 1,
-        noOfSlides: 3,
-        status: "ACTIVE"
-      }
-    ];
-    return { data };
+  productBrands() {
+    return request<ProductBrand[]>("/company/product-brands");
   },
 
   createProductBrand(input: { shortName?: string | null; brandName: string }) {
@@ -383,28 +313,8 @@ export const apiClient = {
     return request<ProductBrand>(`/company/product-brands/${id}/reactivate`, { method: "POST" });
   },
 
-  async productCatalog() {
-    const data: ProductCatalogItem[] = [
-      {
-        id: "prod-1",
-        productCode: "ZL_PRD_01",
-        productName: "BEPIREX",
-        description: "BEPOTASTINE BESILATE",
-        saleUnit: "10 ML",
-        noOfSlides: 5,
-        status: "ACTIVE"
-      },
-      {
-        id: "prod-2",
-        productCode: "ZL_PRD_02",
-        productName: "BRINZIA",
-        description: "BRINZOLAMIDE AND BRIMONIDINE TARTRATE",
-        saleUnit: "5 ML",
-        noOfSlides: 3,
-        status: "ACTIVE"
-      }
-    ];
-    return { data };
+  productCatalog() {
+    return request<ProductCatalogItem[]>("/company/product-catalog");
   },
 
   createProductCatalogItem(input: { productCode?: string | null; productName: string; description?: string | null; saleUnit?: string | null }) {

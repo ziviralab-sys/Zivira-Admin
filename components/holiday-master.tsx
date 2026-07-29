@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { excelHolidays } from "@/lib/excel-mock-data";
+import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function HolidayMaster() {
   const [holidays, setHolidays] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    setHolidays(excelHolidays);
-  }, []);
 
   const filtered = holidays.filter(
     (h) =>

@@ -141,31 +141,30 @@ export function DoctorManager() {
             </tr>
           </thead>
           <tbody>
-            {doctors.map((doctor, i) => {
-              const docCode = `DOC${String(i + 1).padStart(3, "0")}`;
+            {doctors.map((doctor) => {
               return (
                 <tr key={doctor.id}>
-                  <td>{docCode}</td>
-                  <td>12 May</td>
-                  <td>19 Oct</td>
+                  <td>{doctor.id}</td>
+                  <td>—</td>
+                  <td>—</td>
                   <td>{doctor.territory || "KUKATPALLY"}</td>
                   <td><strong>{doctor.name}</strong></td>
-                  <td>Male</td>
+                  <td>—</td>
                   <td>{doctor.specialty || "CARDIOLOGY"}</td>
                   <td>{doctor.category || "A"}</td>
-                  <td>REG123456</td>
-                  <td>Married</td>
-                  <td>MD, MBBS</td>
-                  <td>8-3, 2ND FL</td>
-                  <td>Metro Road</td>
-                  <td>Hyderabad</td>
-                  <td>Telangana</td>
-                  <td>India</td>
-                  <td>500072</td>
-                  <td>Care Clinic</td>
-                  <td>9876543210</td>
-                  <td>doctor@zivira.com</td>
-                  <td>Grade A</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>{doctor.city}</td>
+                  <td>{doctor.state}</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
                 </tr>
               );
             })}
