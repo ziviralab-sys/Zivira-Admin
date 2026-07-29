@@ -3,13 +3,23 @@
 import type { Doctor } from "@zivira/types";
 import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, type PaginationInfo } from "@/lib/api-client";
+import { PaginationControls } from "./pagination-controls";
+
+const PAGE_SIZE = 100;
 
 export function TerritoryMaster() {
   const [items, setItems] = useState<Doctor[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+
+  function load(page = 1) {
+    apiClient.doctors({ page, limit: PAGE_SIZE })
+      .then((res) => { setItems(res.data); setPagination(res.pagination); })
+      .catch(() => setItems([]));
+  }
 
   useEffect(() => {
-    apiClient.doctors().then((res) => setItems(res.data)).catch(() => setItems([]));
+    load(1);
   }, []);
 
   return (
@@ -57,6 +67,7 @@ export function TerritoryMaster() {
             ))}
           </tbody>
         </table>
+        <PaginationControls pagination={pagination} onPrev={() => load(pagination.page - 1)} onNext={() => load(pagination.page + 1)} />
       </div>
     </section>
   );
