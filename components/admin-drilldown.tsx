@@ -20,6 +20,7 @@ import { EmployeeManager } from "@/components/employee-manager";
 import { TerritoryMaster } from "@/components/territory-master";
 import { TerritoryListedDoctor } from "@/components/territory-listed-doctor";
 import { ChemistMaster } from "@/components/chemist-master";
+import { HospitalMaster } from "@/components/hospital-master";
 
 export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: string[] }) {
   const pathStr = path.join("/");
@@ -34,6 +35,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
 
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/field-force-entries/chemist") {
     return <ChemistMaster />;
+  }
+
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/field-force-entries/hospital") {
+    return <HospitalMaster />;
   }
 
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/field-force") {
