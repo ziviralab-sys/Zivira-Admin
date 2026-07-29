@@ -24,6 +24,9 @@ export type ProductCatalogItem = {
   productCode?: string | null;
   productName: string;
   description?: string | null;
+  brandName?: string | null;
+  molecule?: string | null;
+  therapy?: string | null;
   saleUnit?: string | null;
   noOfSlides?: number | null;
   sortOrder?: number | null;

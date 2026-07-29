@@ -411,8 +411,9 @@ export function SubdivisionProductwise() {
     window.print();
   }
 
-  // ProductCatalogModel has no category/group fields — Category and Group render as "—" below.
-  const categories: string[] = [];
+  // Category = the product's therapy (ProductCatalogModel has no separate "group" concept —
+  // the Excel workbook has no Group/Product Group sheet or column anywhere, so Group stays "—").
+  const categories = [...new Set((products ?? []).map(p => p.therapy).filter((t): t is string => !!t))];
 
   return (
     <section className="subdivision-console">
@@ -498,9 +499,9 @@ export function SubdivisionProductwise() {
                   <tr key={p.id}>
                     <td style={{ color: "#9ca3af", fontWeight: 500 }}>{index + 1}</td>
                     <td><strong style={{ color: "#111827" }}>{p.productName}</strong></td>
-                    <td style={{ color: "#6b7280", fontSize: "13px" }}>{p.description ?? "—"}</td>
+                    <td style={{ color: "#6b7280", fontSize: "13px" }}>{p.molecule ?? "—"}</td>
                     <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{p.saleUnit ?? "—"}</span></td>
-                    <td>—</td>
+                    <td>{p.therapy ? <CategoryBadge category={p.therapy} /> : "—"}</td>
                     <td>—</td>
                   </tr>
                 ))}
