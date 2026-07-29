@@ -1,24 +1,5 @@
 import type { ApiEnvelope, CompanyDashboard, DcrExtended, Doctor, Employee, Product } from "@zivira/types";
 
-export type SubdivisionProduct = {
-  id: string;
-  name: string;
-  description?: string | null;
-  saleUnit?: string | null;
-  category: string;
-  group?: string | null;
-  subDivision: string;
-};
-
-export type SubdivisionFieldForce = {
-  id: string;
-  name: string;
-  designation: string;
-  hq?: string | null;
-  reportingTo?: string | null;
-  subDivision: string;
-};
-
 export type ProductCategory = {
   id: string;
   shortName?: string | null;
@@ -87,6 +68,68 @@ export type Subdivision = {
   status: "ACTIVE" | "INACTIVE";
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type ProductGroup = {
+  id: string;
+  moleculeName: string;
+  therapyName?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type Dealer = {
+  id: string;
+  sourceSNo?: number | null;
+  employeeName?: string | null;
+  employeeCode?: string | null;
+  patchName?: string | null;
+  dealerName: string;
+  contactPersonName?: string | null;
+  dealerPhone?: string | null;
+  dealerEmail?: string | null;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
+  location?: string | null;
+  pincode?: string | null;
+  address?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type Holiday = {
+  id: string;
+  sourceSNo?: number | null;
+  stateName: string;
+  weekendHoliday?: string | null;
+  otherHolidayDate?: string | null;
+  otherHolidayDescription?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type Sfc = {
+  id: string;
+  sourceSNo?: number | null;
+  employeeName?: string | null;
+  employeeCode?: string | null;
+  hq?: string | null;
+  patchName?: string | null;
+  typeRaw?: string | null;
+  oneWayKms?: number | null;
+  region?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type Expense = {
+  id: string;
+  role: string;
+  listOfExpenseTypes?: string | null;
+  station?: string | null;
+  metroType?: string | null;
+  amountNC?: number | null;
+  dailyWork?: string | null;
+  frequency?: string | null;
+  remarks?: string | null;
+  status: "ACTIVE" | "INACTIVE";
 };
 
 if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -253,12 +296,12 @@ export const apiClient = {
     return request<Subdivision>(`/company/subdivisions/${id}/deactivate`, { method: "POST" });
   },
 
-  productsBySubdivision(subDivision: string) {
-    return request<SubdivisionProduct[]>(`/company/products?subDivision=${encodeURIComponent(subDivision)}`);
+  productCatalogByDivision(division: string) {
+    return request<ProductCatalogItem[]>(`/company/product-catalog?division=${encodeURIComponent(division)}`);
   },
 
-  fieldForceBySubdivision(subDivision: string) {
-    return request<SubdivisionFieldForce[]>(`/company/fieldforce?subDivision=${encodeURIComponent(subDivision)}`);
+  employeesByDivision(division: string) {
+    return request<Employee[]>(`/company/employees?division=${encodeURIComponent(division)}`);
   },
 
   productCategories() {
@@ -415,5 +458,25 @@ export const apiClient = {
 
   reactivateDoctorQualification(id: string) {
     return request<DoctorQualification>(`/company/doctor-qualifications/${id}/reactivate`, { method: "POST" });
+  },
+
+  productGroups() {
+    return request<ProductGroup[]>("/company/product-groups");
+  },
+
+  dealers() {
+    return request<Dealer[]>("/company/dealers");
+  },
+
+  holidays() {
+    return request<Holiday[]>("/company/holidays");
+  },
+
+  sfc() {
+    return request<Sfc[]>("/company/sfc");
+  },
+
+  expenses() {
+    return request<Expense[]>("/company/expenses");
   }
 };

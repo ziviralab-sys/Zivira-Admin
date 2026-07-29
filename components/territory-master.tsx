@@ -1,18 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import type { Doctor } from "@zivira/types";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 export function TerritoryMaster() {
-  const [items, setItems] = useState<
-    Array<{
-      sNo: number;
-      employeeName: string;
-      employeeCode: string;
-      patchName: string;
-      customerName: string;
-    }>
-  >([]);
+  const [items, setItems] = useState<Doctor[]>([]);
+
+  useEffect(() => {
+    apiClient.doctors().then((res) => setItems(res.data)).catch(() => setItems([]));
+  }, []);
 
   return (
     <section className="subdivision-console">
@@ -44,17 +42,17 @@ export function TerritoryMaster() {
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
-              <tr key={row.sNo}>
-                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{row.sNo}</td>
-                <td><strong>{row.employeeName}</strong></td>
-                <td>{row.employeeCode}</td>
+            {items.map((row, i) => (
+              <tr key={row.id}>
+                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{i + 1}</td>
+                <td><strong>{row.mappedEmployeeName || "—"}</strong></td>
+                <td>{row.mappedEmployeeCode || "—"}</td>
                 <td>
                   <span style={{ background: "#f3f4f6", borderRadius: "6px", padding: "3px 10px", fontSize: "12px", fontWeight: 600 }}>
-                    {row.patchName}
+                    {row.territory}
                   </span>
                 </td>
-                <td>{row.customerName}</td>
+                <td>{row.name}</td>
               </tr>
             ))}
           </tbody>

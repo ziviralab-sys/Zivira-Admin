@@ -69,6 +69,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
   }
 
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/category") {
+    return <DoctorCategoryMaster />;
+  }
+
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/class") {
     return <DoctorManager />;
   }
 

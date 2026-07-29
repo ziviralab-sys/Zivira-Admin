@@ -1,27 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient, type Dealer } from "@/lib/api-client";
 
 export function ChemistMaster() {
-  const [items, setItems] = useState<
-    Array<{
-      sNo: number;
-      employeeName: string;
-      employeeCode: string;
-      patchName: string;
-      dealerName: string;
-      contactPerson: string;
-      phone: string;
-      email: string;
-      country: string;
-      state: string;
-      city: string;
-      location: string;
-      pincode: string;
-      address: string;
-    }>
-  >([]);
+  const [items, setItems] = useState<Dealer[]>([]);
+
+  useEffect(() => {
+    apiClient.dealers().then((res) => setItems(res.data)).catch(() => setItems([]));
+  }, []);
 
   return (
     <section className="subdivision-console">
@@ -50,9 +38,9 @@ export function ChemistMaster() {
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
-              <tr key={row.sNo}>
-                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{row.sNo}</td>
+            {items.map((row, i) => (
+              <tr key={row.id}>
+                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{row.sourceSNo ?? i + 1}</td>
                 <td><strong>{row.dealerName}</strong></td>
               </tr>
             ))}

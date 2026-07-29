@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient, type ProductGroup } from "@/lib/api-client";
 
 export function ProductGroupMaster() {
-  const [molecules, setMolecules] = useState<Array<{ moleculeName: string; therapyName: string }>>([]);
+  const [molecules, setMolecules] = useState<ProductGroup[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    apiClient.productGroups().then((res) => setMolecules(res.data)).catch(() => setMolecules([]));
+  }, []);
 
   const filtered = molecules.filter(
     (m) =>
       m.moleculeName.toLowerCase().includes(search.toLowerCase()) ||
-      m.therapyName.toLowerCase().includes(search.toLowerCase())
+      (m.therapyName ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -70,13 +75,13 @@ export function ProductGroupMaster() {
           </thead>
           <tbody>
             {filtered.map((row, i) => (
-              <tr key={i}>
+              <tr key={row.id}>
                 <td style={{ color: "var(--muted)", fontWeight: 500 }}>{i + 1}</td>
                 <td>
                   <strong style={{ color: "var(--ink)" }}>{row.moleculeName}</strong>
                 </td>
                 <td style={{ color: "var(--muted)", fontSize: "13px" }}>
-                  {row.therapyName}
+                  {row.therapyName ?? "—"}
                 </td>
               </tr>
             ))}

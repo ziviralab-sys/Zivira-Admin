@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient, type Sfc, type Expense } from "@/lib/api-client";
 
 export function ExpenseMaster({ defaultTab = "sfc" }: { defaultTab?: string }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [sfcData, setSfcData] = useState<any[]>([]);
-  const [expenseData, setExpenseData] = useState<any[]>([]);
+  const [sfcData, setSfcData] = useState<Sfc[]>([]);
+  const [expenseData, setExpenseData] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    apiClient.sfc().then((res) => setSfcData(res.data)).catch(() => setSfcData([]));
+    apiClient.expenses().then((res) => setExpenseData(res.data)).catch(() => setExpenseData([]));
+  }, []);
 
   return (
     <section className="subdivision-console">
@@ -54,12 +60,12 @@ export function ExpenseMaster({ defaultTab = "sfc" }: { defaultTab?: string }) {
                 </tr>
               </thead>
               <tbody>
-                {sfcData.slice(0, 15).map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.hq}</td>
-                    <td>{row.patchName}</td>
-                    <td>{row.hq} STATION</td>
-                    <td><strong>{row.oneWayKms || "45"} KM</strong></td>
+                {sfcData.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.hq || "—"}</td>
+                    <td>{row.patchName || "—"}</td>
+                    <td>—</td>
+                    <td><strong>{row.oneWayKms !== null && row.oneWayKms !== undefined ? `${row.oneWayKms} KM` : "—"}</strong></td>
                   </tr>
                 ))}
               </tbody>
@@ -84,11 +90,11 @@ export function ExpenseMaster({ defaultTab = "sfc" }: { defaultTab?: string }) {
                 </tr>
               </thead>
               <tbody>
-                {expenseData.filter(e => e.station).slice(0, 15).map((row, i) => (
-                  <tr key={i}>
+                {expenseData.filter(e => e.station).map((row) => (
+                  <tr key={row.id}>
                     <td>{row.station}</td>
-                    <td>{row.metroType || "METRO"}</td>
-                    <td><strong style={{ color: "var(--brand-strong)" }}>₹{row.amount || "180"}</strong></td>
+                    <td>{row.metroType || "—"}</td>
+                    <td><strong style={{ color: "var(--brand-strong)" }}>{row.amountNC !== null && row.amountNC !== undefined ? `₹${row.amountNC}` : "—"}</strong></td>
                   </tr>
                 ))}
               </tbody>
@@ -142,15 +148,15 @@ export function ExpenseMaster({ defaultTab = "sfc" }: { defaultTab?: string }) {
                 </tr>
               </thead>
               <tbody>
-                {expenseData.slice(0, 15).map((row, i) => (
-                  <tr key={i}>
+                {expenseData.map((row) => (
+                  <tr key={row.id}>
                     <td><strong>{row.role}</strong></td>
-                    <td>{row.expenseType || "DA"}</td>
-                    <td>{row.frequency === "Daily" ? "Daily" : "Weekly"}</td>
-                    <td>{row.station}</td>
-                    <td>{row.metroType}</td>
-                    <td>₹{row.amount}</td>
-                    <td>{row.frequency}</td>
+                    <td>{row.listOfExpenseTypes || "—"}</td>
+                    <td>{row.dailyWork || "—"}</td>
+                    <td>{row.station || "—"}</td>
+                    <td>{row.metroType || "—"}</td>
+                    <td>{row.amountNC !== null && row.amountNC !== undefined ? `₹${row.amountNC}` : "—"}</td>
+                    <td>{row.frequency || "—"}</td>
                   </tr>
                 ))}
               </tbody>
