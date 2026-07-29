@@ -352,12 +352,12 @@ export function ProductDetailMaster() {
           <table className="subdivision-table">
             <thead>
               <tr>
-                <th>Sl. No</th><th>Product Name</th><th>Brand Name</th><th>Molecule</th><th>Description</th><th>Sale Unit</th>
+                <th>Sl. No</th><th>Product Name</th><th>Brand Name</th><th>Molecule</th><th>Sale Unit</th>
                 <th>Inline Edit</th><th>Edit</th><th>Deactivate</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={9} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>Loading...</td></tr>}
+              {loading && <tr><td colSpan={8} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>Loading...</td></tr>}
               {!loading && rows.map((row, i) => {
                 const editing = inlineEditId === row.id && draftRow;
                 const display = { brandName: row.brandName ?? "—", molecule: row.molecule ?? "—" };
@@ -372,12 +372,6 @@ export function ProductDetailMaster() {
                     </td>
                     <td style={{ color:"var(--muted)" }}>{display.brandName}</td>
                     <td style={{ color:"var(--muted)", fontSize:"13px" }}>{display.molecule}</td>
-                    <td>
-                      {editing
-                        ? <input className="subdivision-inline-input" value={draftRow.description} onChange={e => setDraftRow({ ...draftRow, description: e.target.value })} />
-                        : <span style={{ color:"var(--muted)", fontSize:"13px" }}>{row.description ?? "—"}</span>
-                      }
-                    </td>
                     <td style={{ color:"var(--muted)" }}>{row.saleUnit ?? "—"}</td>
                     <td>
                       {editing ? (
@@ -398,7 +392,7 @@ export function ProductDetailMaster() {
                   </tr>
                 );
               })}
-              {!loading && rows.length === 0 && <tr><td colSpan={9} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No products yet</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={8} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No products yet</td></tr>}
             </tbody>
           </table>
         </div>
