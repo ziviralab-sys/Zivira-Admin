@@ -377,7 +377,16 @@ export function SubdivisionProductwise() {
   useEffect(() => {
     apiClient.subdivisions()
       .then(res => {
-        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.division);
+        const seen = new Set<string>();
+        const names = res.data
+          .filter(s => s.status === "ACTIVE")
+          .map(s => s.division)
+          .filter(name => {
+            const key = name.toUpperCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         setSubdivisionOptions(names);
         if (names.length > 0) setSelected(names[0]);
       })
@@ -529,7 +538,16 @@ export function SubdivisionFieldforcewise() {
   useEffect(() => {
     apiClient.subdivisions()
       .then(res => {
-        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.division);
+        const seen = new Set<string>();
+        const names = res.data
+          .filter(s => s.status === "ACTIVE")
+          .map(s => s.division)
+          .filter(name => {
+            const key = name.toUpperCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         setSubdivisionOptions(names);
         if (names.length > 0) setSelected(names[0]);
       })
