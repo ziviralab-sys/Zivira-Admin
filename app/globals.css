@@ -508,10 +508,10 @@ select {
 }
 
 .command-select-button {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
   width: 210px;
   height: 38px;
   min-height: 38px;
@@ -519,30 +519,49 @@ select {
   border-radius: 6px;
   background: var(--command-panel);
   color: var(--command-ink);
-  padding: 0 12px;
+  padding: 0 32px;
   font-weight: 500;
-  line-height: 38px;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .command-select-button span {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  height: 100%;
-  line-height: 1;
+  display: block;
+  width: 100%;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: normal;
+  transform: translateY(-4px);
 }
 
 .command-select-button svg {
-  flex-shrink: 0;
-  display: block;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .command-select-compact .command-select-button {
   width: 92px;
+  padding: 0 20px;
+}
+
+.command-select-compact .command-select-button svg {
+  right: 6px;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .command-select-menu {
@@ -552,13 +571,33 @@ select {
   right: 0;
   display: grid;
   width: min(360px, 80vw);
-  max-height: 320px;
+  max-height: 280px;
   overflow-y: auto;
   border: 1px solid var(--command-line);
-  border-radius: 8px;
-  background: var(--command-panel);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--command-panel) 85%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
   padding: 6px;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+
+.command-select-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.command-select-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.command-select-menu::-webkit-scrollbar-thumb {
+  background: var(--command-line);
+  border-radius: 10px;
+}
+
+.command-select-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--command-teal);
 }
 
 .command-select-compact .command-select-menu {
@@ -570,22 +609,34 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 34px;
+  min-height: 36px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--command-ink);
-  padding: 0 10px;
+  padding: 0 12px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.command-select-option:hover,
-.command-select-option-active {
+.command-select-option:hover {
   background: var(--command-panel-soft);
   color: var(--brand-strong);
+  transform: translateX(4px);
+}
+
+.command-select-option-active {
+  background: var(--command-teal) !important;
+  color: #fff !important;
+}
+
+.command-select-option-active:hover {
+  background: var(--command-teal) !important;
+  color: #fff !important;
+  transform: none;
 }
 
 .command-dashboard .button {
@@ -2050,4 +2101,13 @@ tr:last-child td {
 
 .sidebar-toggle-btn {
   flex-shrink: 0;
+}
+
+.search-item-hover {
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.search-item-hover:hover {
+  background: var(--command-panel-soft) !important;
+  transform: translateX(4px);
 }

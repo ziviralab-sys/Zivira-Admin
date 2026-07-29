@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, ChevronRight, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { apiClient, type SubdivisionProduct, type SubdivisionFieldForce } from "@/lib/api-client";
 
 type SubdivisionRow = { id: string; shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
@@ -360,6 +360,18 @@ export function SubdivisionProductwise() {
   const [products, setProducts] = useState<SubdivisionProduct[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     apiClient.subdivisions()
@@ -401,26 +413,54 @@ export function SubdivisionProductwise() {
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
-        <label className="field" style={{ minWidth: "220px" }}>
-          <span>Sub Division Name</span>
-          <select
-            value={selected}
-            onChange={e => setSelected(e.target.value)}
-            style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px" }}
-          >
-            {subdivisionOptions.length === 0 && <option value="">No sub-divisions</option>}
-            {subdivisionOptions.map(name => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </label>
-        <button className="button" onClick={handleGo} type="button" disabled={!selected || loading}>
-          {loading ? "Loading..." : "Go"}
-        </button>
-        {products !== null && (
-          <button className="button button-secondary" onClick={handlePrint} type="button">
-            Print
+      <div style={{ marginBottom: "20px" }}>
+        <span style={{ display: "block", fontSize: "14px", fontWeight: 500, marginBottom: "6px", color: "var(--ink)" }}>Sub Division Name</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div ref={dropdownRef} className="command-select" style={{ position: "relative" }}>
+            <button
+              className="command-select-button"
+              style={{
+                width: "220px",
+                height: "38px",
+                minHeight: "38px",
+                paddingLeft: "16px",
+                position: "relative"
+              }}
+              onClick={() => setOpenMenu(!openMenu)}
+              type="button"
+            >
+              <span>{selected || "Select Sub Division"}</span>
+              <ChevronDown size={15} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+            </button>
+            {openMenu && (
+              <div className="command-select-menu" style={{ width: "220px", top: "calc(100% + 6px)" }}>
+                {subdivisionOptions.length === 0 && (
+                  <button className="command-select-option" disabled type="button">
+                    <span>No sub-divisions</span>
+                  </button>
+                )}
+                {subdivisionOptions.map(name => (
+                  <button
+                    key={name}
+                    className={selected === name ? "command-select-option command-select-option-active" : "command-select-option"}
+                    onClick={() => { setSelected(name); setOpenMenu(false); }}
+                    type="button"
+                  >
+                    <span>{name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="button" onClick={handleGo} type="button" disabled={!selected || loading} style={{ height: "38px" }}>
+            {loading ? "Loading..." : "Go"}
           </button>
-        )}
+          {products !== null && (
+            <button className="button button-secondary" onClick={handlePrint} type="button" style={{ height: "38px" }}>
+              Print
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}
@@ -471,6 +511,18 @@ export function SubdivisionFieldforcewise() {
   const [rows, setRows] = useState<SubdivisionFieldForce[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     apiClient.subdivisions()
@@ -512,26 +564,54 @@ export function SubdivisionFieldforcewise() {
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
-        <label className="field" style={{ minWidth: "220px" }}>
-          <span>Sub Division Name</span>
-          <select
-            value={selected}
-            onChange={e => setSelected(e.target.value)}
-            style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px" }}
-          >
-            {subdivisionOptions.length === 0 && <option value="">No sub-divisions</option>}
-            {subdivisionOptions.map(name => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </label>
-        <button className="button" onClick={handleGo} type="button" disabled={!selected || loading}>
-          {loading ? "Loading..." : "Go"}
-        </button>
-        {rows !== null && (
-          <button className="button button-secondary" onClick={handlePrint} type="button">
-            Print
+      <div style={{ marginBottom: "20px" }}>
+        <span style={{ display: "block", fontSize: "14px", fontWeight: 500, marginBottom: "6px", color: "var(--ink)" }}>Sub Division Name</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <div ref={dropdownRef} className="command-select" style={{ position: "relative" }}>
+            <button
+              className="command-select-button"
+              style={{
+                width: "220px",
+                height: "38px",
+                minHeight: "38px",
+                paddingLeft: "16px",
+                position: "relative"
+              }}
+              onClick={() => setOpenMenu(!openMenu)}
+              type="button"
+            >
+              <span>{selected || "Select Sub Division"}</span>
+              <ChevronDown size={15} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+            </button>
+            {openMenu && (
+              <div className="command-select-menu" style={{ width: "220px", top: "calc(100% + 6px)" }}>
+                {subdivisionOptions.length === 0 && (
+                  <button className="command-select-option" disabled type="button">
+                    <span>No sub-divisions</span>
+                  </button>
+                )}
+                {subdivisionOptions.map(name => (
+                  <button
+                    key={name}
+                    className={selected === name ? "command-select-option command-select-option-active" : "command-select-option"}
+                    onClick={() => { setSelected(name); setOpenMenu(false); }}
+                    type="button"
+                  >
+                    <span>{name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="button" onClick={handleGo} type="button" disabled={!selected || loading} style={{ height: "38px" }}>
+            {loading ? "Loading..." : "Go"}
           </button>
-        )}
+          {rows !== null && (
+            <button className="button button-secondary" onClick={handlePrint} type="button" style={{ height: "38px" }}>
+              Print
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}

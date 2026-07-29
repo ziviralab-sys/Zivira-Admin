@@ -1,7 +1,7 @@
 "use client";
 
 import { Cake, Download, Search, SlidersHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 type DobRow = {
   sno: number;
@@ -112,6 +112,19 @@ export function DoctorCelebrations() {
   const [activeTab, setActiveTab] = useState<TabKey>("dob");
   const [selectedMonth, setSelectedMonth] = useState("May");
 
+  const [openMenu, setOpenMenu] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const activeData = useMemo(() => {
     const src = activeTab === "dob" ? dobData : activeTab === "dow" ? dowData : bothData;
     return src.filter(r => {
@@ -133,11 +146,36 @@ export function DoctorCelebrations() {
           <p>Listed doctor date of birth and wedding anniversary details by field force and month.</p>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <div style={{ position:"relative" }}>
-            <SlidersHorizontal size={14} style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"var(--muted)", pointerEvents:"none" }} />
-            <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} style={{ paddingLeft:30, paddingRight:12, height:36, borderRadius:8, border:"1px solid var(--line)", background:"var(--panel)", color:"var(--ink)", fontSize:13, fontWeight:500, cursor:"pointer" }}>
-              {months.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+          <div ref={dropdownRef} className="command-select" style={{ position:"relative" }}>
+            <button
+              className="command-select-button"
+              style={{
+                width: "115px",
+                height: "36px",
+                minHeight: "36px",
+                paddingLeft: "32px",
+                position: "relative"
+              }}
+              onClick={() => setOpenMenu(!openMenu)}
+              type="button"
+            >
+              <span>{selectedMonth}</span>
+              <SlidersHorizontal size={14} style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"var(--muted)", pointerEvents:"none" }} />
+            </button>
+            {openMenu && (
+              <div className="command-select-menu" style={{ width: "130px", top: "calc(100% + 6px)" }}>
+                {months.map(m => (
+                  <button
+                    key={m}
+                    className={selectedMonth === m ? "command-select-option command-select-option-active" : "command-select-option"}
+                    onClick={() => { setSelectedMonth(m); setOpenMenu(false); }}
+                    type="button"
+                  >
+                    <span>{m}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button className="button button-secondary" type="button" style={{ display:"flex", alignItems:"center", gap:6 }}>
             <Download size={14} /> Export
