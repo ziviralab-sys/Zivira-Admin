@@ -1,14 +1,15 @@
 "use client";
 
+import type { Employee } from "@zivira/types";
 import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { apiClient, type SubdivisionProduct, type SubdivisionFieldForce } from "@/lib/api-client";
+import { apiClient, type ProductCatalogItem } from "@/lib/api-client";
 
-type SubdivisionRow = { id: string; shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
+type SubdivisionRow = { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
 type ProductRow = { sno: number; productName: string; description: string; saleUnit: string; category: string; group: string; };
 type FieldForceRow = { sno: number; name: string; designation: string; hq: string; reportingTo: string; };
 
-const emptyFormRow: SubdivisionRow = { id: "", shortName: "", subdivisionName: "", productwiseCount: 0, fieldforcewiseCount: 0, status: "ACTIVE" };
+const emptyFormRow: SubdivisionRow = { id: "", division: "", subdivisionName: "", productwiseCount: 0, fieldforcewiseCount: 0, status: "ACTIVE" };
 
 const productwiseData: Record<string, ProductRow[]> = {};
 
@@ -169,7 +170,7 @@ function DeleteConfirmDialog({ name, onConfirm, onCancel }: { name: string; onCo
   );
 }
 
-function toRow(s: { id: string; shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE" }): SubdivisionRow {
+function toRow(s: { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE" }): SubdivisionRow {
   const mapName = (val: string) => {
     if (!val) return val;
     if (val.toUpperCase() === "ZIVIRA LABS") return "Zivira";
@@ -177,7 +178,7 @@ function toRow(s: { id: string; shortName: string; subdivisionName: string; prod
   };
   return {
     id: s.id,
-    shortName: mapName(s.shortName),
+    division: mapName(s.division),
     subdivisionName: mapName(s.subdivisionName),
     productwiseCount: s.productwiseCount,
     fieldforcewiseCount: s.fieldforcewiseCount,
@@ -219,7 +220,7 @@ export function SubdivisionMaster() {
     if (!draftRow) return;
     setSaving(true);
     try {
-      await apiClient.updateSubdivision(draftRow.id, { shortName: draftRow.shortName, subdivisionName: draftRow.subdivisionName });
+      await apiClient.updateSubdivision(draftRow.id, { division: draftRow.division, subdivisionName: draftRow.subdivisionName });
       await loadSubdivisions();
       cancelInlineEdit();
     } catch (err) {
@@ -238,9 +239,9 @@ export function SubdivisionMaster() {
     setError(null);
     try {
       if (formRow.id) {
-        await apiClient.updateSubdivision(formRow.id, { shortName: formRow.shortName, subdivisionName: formRow.subdivisionName });
+        await apiClient.updateSubdivision(formRow.id, { division: formRow.division, subdivisionName: formRow.subdivisionName });
       } else {
-        await apiClient.createSubdivision({ shortName: formRow.shortName, subdivisionName: formRow.subdivisionName });
+        await apiClient.createSubdivision({ division: formRow.division, subdivisionName: formRow.subdivisionName });
       }
       await loadSubdivisions();
       setFormRow(null);
@@ -277,7 +278,7 @@ export function SubdivisionMaster() {
         </div>
         <div className="subdivision-form-card">
           {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
-          <label className="field"><span>Division</span><input autoFocus value={formRow.shortName} onChange={e => setFormRow({ ...formRow, shortName: e.target.value })} /></label>
+          <label className="field"><span>Division</span><input autoFocus value={formRow.division} onChange={e => setFormRow({ ...formRow, division: e.target.value })} /></label>
           <label className="field"><span>Sub-Division Name</span><input value={formRow.subdivisionName} onChange={e => setFormRow({ ...formRow, subdivisionName: e.target.value })} /></label>
           <button className="button" onClick={saveForm} type="button" disabled={saving}><Check size={16} /> {saving ? "Saving..." : "Save"}</button>
         </div>
@@ -314,7 +315,7 @@ export function SubdivisionMaster() {
                 return (
                   <tr key={row.id}>
                     <td>{index + 1}</td>
-                    <td>{editing ? <input className="subdivision-inline-input" value={draftRow.shortName} onChange={e => setDraftRow({ ...draftRow, shortName: e.target.value })} /> : row.shortName}</td>
+                    <td>{editing ? <input className="subdivision-inline-input" value={draftRow.division} onChange={e => setDraftRow({ ...draftRow, division: e.target.value })} /> : row.division}</td>
                     <td>{editing ? <input className="subdivision-inline-input" value={draftRow.subdivisionName} onChange={e => setDraftRow({ ...draftRow, subdivisionName: e.target.value })} /> : row.subdivisionName}</td>
                     <td>{row.productwiseCount}</td>
                     <td>{row.fieldforcewiseCount}</td>
@@ -357,7 +358,7 @@ export function SubdivisionMaster() {
 export function SubdivisionProductwise() {
   const [subdivisionOptions, setSubdivisionOptions] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>("");
-  const [products, setProducts] = useState<SubdivisionProduct[] | null>(null);
+  const [products, setProducts] = useState<ProductCatalogItem[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState(false);
@@ -376,7 +377,7 @@ export function SubdivisionProductwise() {
   useEffect(() => {
     apiClient.subdivisions()
       .then(res => {
-        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.subdivisionName);
+        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.division);
         setSubdivisionOptions(names);
         if (names.length > 0) setSelected(names[0]);
       })
@@ -388,7 +389,7 @@ export function SubdivisionProductwise() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.productsBySubdivision(selected);
+      const res = await apiClient.productCatalogByDivision(selected);
       setProducts(res.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load products");
@@ -401,7 +402,8 @@ export function SubdivisionProductwise() {
     window.print();
   }
 
-  const categories = [...new Set((products ?? []).map(p => p.category))];
+  // ProductCatalogModel has no category/group fields — Category and Group render as "—" below.
+  const categories: string[] = [];
 
   return (
     <section className="subdivision-console">
@@ -486,11 +488,11 @@ export function SubdivisionProductwise() {
                 {products.map((p, index) => (
                   <tr key={p.id}>
                     <td style={{ color: "#9ca3af", fontWeight: 500 }}>{index + 1}</td>
-                    <td><strong style={{ color: "#111827" }}>{p.name}</strong></td>
-                    <td style={{ color: "#6b7280", fontSize: "13px" }}>{p.description}</td>
+                    <td><strong style={{ color: "#111827" }}>{p.productName}</strong></td>
+                    <td style={{ color: "#6b7280", fontSize: "13px" }}>{p.description ?? "—"}</td>
                     <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{p.saleUnit ?? "—"}</span></td>
-                    <td><CategoryBadge category={p.category} /></td>
-                    <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#eff6ff", fontSize: "12px", fontWeight: 700, color: "#2563eb" }}>{p.group ?? "—"}</span></td>
+                    <td>—</td>
+                    <td>—</td>
                   </tr>
                 ))}
                 {products.length === 0 && <tr><td colSpan={6} style={{ textAlign: "center", color: "#9ca3af", padding: "32px" }}>No products found</td></tr>}
@@ -508,7 +510,7 @@ export function SubdivisionProductwise() {
 export function SubdivisionFieldforcewise() {
   const [subdivisionOptions, setSubdivisionOptions] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>("");
-  const [rows, setRows] = useState<SubdivisionFieldForce[] | null>(null);
+  const [rows, setRows] = useState<Employee[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState(false);
@@ -527,7 +529,7 @@ export function SubdivisionFieldforcewise() {
   useEffect(() => {
     apiClient.subdivisions()
       .then(res => {
-        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.subdivisionName);
+        const names = res.data.filter(s => s.status === "ACTIVE").map(s => s.division);
         setSubdivisionOptions(names);
         if (names.length > 0) setSelected(names[0]);
       })
@@ -539,7 +541,7 @@ export function SubdivisionFieldforcewise() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.fieldForceBySubdivision(selected);
+      const res = await apiClient.employeesByDivision(selected);
       setRows(res.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load field force");
@@ -635,8 +637,8 @@ export function SubdivisionFieldforcewise() {
                     <td style={{ color: "#9ca3af", fontWeight: 500 }}>{index + 1}</td>
                     <td><strong style={{ color: "#111827" }}>{r.name}</strong></td>
                     <td><DesignationBadge designation={r.designation} /></td>
-                    <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{r.hq ?? "—"}</span></td>
-                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.reportingTo ?? "—"}</td>
+                    <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{r.territory ?? "—"}</span></td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.reportingManager ?? "—"}</td>
                   </tr>
                 ))}
                 {rows.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9ca3af", padding: "32px" }}>No field force found</td></tr>}

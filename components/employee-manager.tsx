@@ -4,6 +4,7 @@ import type { Employee } from "@zivira/types";
 import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { formatDate } from "@/lib/format-date";
 import { StatusBadge } from "./page-components";
 
 export function EmployeeManager() {
@@ -132,24 +133,24 @@ export function EmployeeManager() {
                 <tr key={employee.id}>
                   <td>{i + 1}</td>
                   <td><strong>{employee.name}</strong></td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
+                  <td>{formatDate(employee.dob)}</td>
+                  <td>{employee.email || "—"}</td>
+                  <td>{employee.phone || "—"}</td>
                   <td>{employee.division}</td>
                   <td>{employee.designation}</td>
                   <td>{employee.employeeCode}</td>
-                  <td>—</td>
-                  <td>{employee.address || "—"}</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
+                  <td>{formatDate(employee.joinDate)}</td>
+                  <td>{employee.address1 || "—"}</td>
+                  <td>{employee.landmark || "—"}</td>
+                  <td>{employee.location || "—"}</td>
+                  <td>{employee.city || "—"}</td>
+                  <td>{employee.state || "—"}</td>
+                  <td>{employee.country || "—"}</td>
+                  <td>{employee.postalCode || "—"}</td>
                   <td>{employee.territory}</td>
                   <td>{employee.reportingManager || "—"}</td>
                   <td>{employee.division}</td>
-                  <td>—</td>
+                  <td>{employee.l1Role || "—"}</td>
                 </tr>
               );
             })}

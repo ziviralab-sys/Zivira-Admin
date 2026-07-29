@@ -4,6 +4,7 @@ import type { Doctor, Employee } from "@zivira/types";
 import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { formatDate } from "@/lib/format-date";
 import { StatusBadge } from "./page-components";
 
 export function DoctorManager() {
@@ -144,27 +145,27 @@ export function DoctorManager() {
             {doctors.map((doctor) => {
               return (
                 <tr key={doctor.id}>
-                  <td>{doctor.id}</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>{doctor.territory || "KUKATPALLY"}</td>
+                  <td>{doctor.doctorCode || doctor.id}</td>
+                  <td>{formatDate(doctor.dob)}</td>
+                  <td>{formatDate(doctor.anniversaryDate)}</td>
+                  <td>{doctor.territory}</td>
                   <td><strong>{doctor.name}</strong></td>
-                  <td>—</td>
-                  <td>{doctor.specialty || "CARDIOLOGY"}</td>
-                  <td>{doctor.category || "A"}</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
+                  <td>{doctor.gender || "—"}</td>
+                  <td>{doctor.specialty}</td>
+                  <td>{doctor.categoryCode || "—"}</td>
+                  <td>{doctor.registrationNo || "—"}</td>
+                  <td>{doctor.maritalStatus || "—"}</td>
+                  <td>{doctor.qualification || "—"}</td>
+                  <td>{doctor.address1 || "—"}</td>
+                  <td>{doctor.location || "—"}</td>
                   <td>{doctor.city}</td>
                   <td>{doctor.state}</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
+                  <td>{doctor.country || "—"}</td>
+                  <td>{doctor.postalCode || "—"}</td>
+                  <td>{doctor.clinicName || "—"}</td>
+                  <td>{doctor.phone || "—"}</td>
+                  <td>{doctor.email || "—"}</td>
+                  <td>{doctor.grade || "—"}</td>
                 </tr>
               );
             })}

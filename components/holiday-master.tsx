@@ -1,16 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient, type Holiday } from "@/lib/api-client";
+import { formatDate } from "@/lib/format-date";
 
 export function HolidayMaster() {
-  const [holidays, setHolidays] = useState<any[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    apiClient.holidays().then((res) => setHolidays(res.data)).catch(() => setHolidays([]));
+  }, []);
 
   const filtered = holidays.filter(
     (h) =>
       h.stateName.toLowerCase().includes(search.toLowerCase()) ||
-      h.otherHolidayDescription.toLowerCase().includes(search.toLowerCase())
+      (h.otherHolidayDescription ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -68,12 +74,12 @@ export function HolidayMaster() {
           </thead>
           <tbody>
             {filtered.slice(0, 30).map((row, i) => (
-              <tr key={i}>
+              <tr key={row.id}>
                 <td style={{ color: "var(--muted)", fontWeight: 500 }}>{i + 1}</td>
                 <td><strong>{row.stateName}</strong></td>
-                <td>{row.weekendHoliday || "SUNDAY"}</td>
-                <td>{row.otherHolidayDate || "01-Jan-2026"}</td>
-                <td>{row.otherHolidayDescription || "New Year's Day"}</td>
+                <td>{row.weekendHoliday || "—"}</td>
+                <td>{formatDate(row.otherHolidayDate)}</td>
+                <td>{row.otherHolidayDescription || "—"}</td>
               </tr>
             ))}
           </tbody>

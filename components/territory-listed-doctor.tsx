@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import type { Doctor } from "@zivira/types";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 export function TerritoryListedDoctor() {
-  const [items, setItems] = useState<
-    Array<{
-      sNo: number;
-      customerName: string;
-      qualification: string;
-    }>
-  >([]);
+  const [items, setItems] = useState<Doctor[]>([]);
+
+  useEffect(() => {
+    apiClient.doctors().then((res) => setItems(res.data)).catch(() => setItems([]));
+  }, []);
 
   return (
     <section className="subdivision-console">
@@ -40,11 +40,11 @@ export function TerritoryListedDoctor() {
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
-              <tr key={row.sNo}>
-                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{row.sNo}</td>
-                <td><strong>{row.customerName}</strong></td>
-                <td>{row.qualification}</td>
+            {items.map((row, i) => (
+              <tr key={row.id}>
+                <td style={{ color: "var(--muted)", fontWeight: 500 }}>{i + 1}</td>
+                <td><strong>{row.name}</strong></td>
+                <td>{row.qualification || "—"}</td>
               </tr>
             ))}
           </tbody>
