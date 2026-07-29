@@ -360,31 +360,7 @@ export function ProductDetailMaster() {
               {loading && <tr><td colSpan={9} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>Loading...</td></tr>}
               {!loading && rows.map((row, i) => {
                 const editing = inlineEditId === row.id && draftRow;
-                const productDetailsMap: Record<string, { brandName: string; molecule: string }> = {
-                  "BEPREX": { brandName: "BEPREX", molecule: "BEPOTASTINE BESILATE" },
-                  "BRINZIA": { brandName: "BRINZIA", molecule: "BRINZOLAMIDE AND BRIMONIDINE TARTRATE" },
-                  "BRITIVIN": { brandName: "BRITIVIN", molecule: "BRIMONIDINE TARTRATE AND TIMOLOL MALEATE" },
-                  "CIZIA": { brandName: "CIZIA", molecule: "CYCLOSPORINE IP" },
-                  "DEXNOVA": { brandName: "DEXNOVA", molecule: "DEXAMETHASONE SODIUM PHOSPHATE IP" },
-                  "DORVISA T": { brandName: "DORVISA T", molecule: "DORZOLAMIDE HYDROCHLORIDE IP AND TIMOLOL MALEATE IP" },
-                  "DUCIDROP": { brandName: "DUCIDROP", molecule: "HYDROXYPROPYL METHYLCELLULOSE IP" },
-                  "DECIRA GEL": { brandName: "DECIRA GEL", molecule: "HYDROXYPROPYL METHYLCELLULOSE IP" },
-                  "ENVISA": { brandName: "ENVISA", molecule: "LUTEIN, ASTAXANTHIN AND L-GLUTATHIONE" },
-                  "FOMIRA": { brandName: "FOMIRA", molecule: "POLYETHYLENE GLYCOL AND PROPYLENE GLYCOL IP" },
-                  "LATOPROST": { brandName: "LATOPROST", molecule: "LATANOPROST" },
-                  "LOTIVIZ": { brandName: "LOTIVIZ", molecule: "LOTEPREDNOL ETABONATE" },
-                  "MACUMER": { brandName: "MACUMER", molecule: "LUTEIN, ZEAXANTHIN AND MESOZEAXANTHIN" },
-                  "NEPAWEL": { brandName: "NEPAWEL", molecule: "NEPAFENAC" },
-                  "PATVIRA": { brandName: "PATVIRA", molecule: "OLOPATADINE HYDROCHLORIDE IP" },
-                  "PREDIRA": { brandName: "PREDIRA", molecule: "PREDNISOLONE ACETATE IP" },
-                  "STRIOS": { brandName: "STRIOS", molecule: "PURIFIED WATER GAMMA STERILISED WIPES" },
-                  "TIMOBEST": { brandName: "TIMOBEST", molecule: "TIMOLOL MALEATE IP" },
-                  "TIZTA": { brandName: "TIZTA", molecule: "SODIUM HYALURONATE BP" },
-                  "TIZTA LIQUIGEL": { brandName: "TIZTA LIQUIGEL", molecule: "SODIUM HYALURONATE BP, TREHALOSE AND CARBOMER" },
-                  "TOBRAWIN": { brandName: "TOBRAWIN", molecule: "TOBRAMYCIN SULFATE USP" },
-                  "TOBRAWIN LP": { brandName: "TOBRAWIN LP", molecule: "TOBRAMYCIN SULFATE USP AND LOTEPREDNOL ETABONATE" }
-                };
-                const display = productDetailsMap[row.productName.toUpperCase()] || { brandName: row.productName, molecule: "GENERIC MOLECULE" };
+                const display = { brandName: row.brandName ?? "—", molecule: row.molecule ?? "—" };
                 return (
                   <tr key={row.id}>
                     <td style={{ color:"var(--muted)", fontWeight:500 }}>{i + 1}</td>
