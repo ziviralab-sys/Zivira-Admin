@@ -4,11 +4,11 @@ import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, Sli
 import { useEffect, useState, useRef } from "react";
 import { apiClient, type SubdivisionProduct, type SubdivisionFieldForce } from "@/lib/api-client";
 
-type SubdivisionRow = { id: string; shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
+type SubdivisionRow = { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
 type ProductRow = { sno: number; productName: string; description: string; saleUnit: string; category: string; group: string; };
 type FieldForceRow = { sno: number; name: string; designation: string; hq: string; reportingTo: string; };
 
-const emptyFormRow: SubdivisionRow = { id: "", shortName: "", subdivisionName: "", productwiseCount: 0, fieldforcewiseCount: 0, status: "ACTIVE" };
+const emptyFormRow: SubdivisionRow = { id: "", division: "", subdivisionName: "", productwiseCount: 0, fieldforcewiseCount: 0, status: "ACTIVE" };
 
 const productwiseData: Record<string, ProductRow[]> = {};
 
@@ -169,7 +169,7 @@ function DeleteConfirmDialog({ name, onConfirm, onCancel }: { name: string; onCo
   );
 }
 
-function toRow(s: { id: string; shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE" }): SubdivisionRow {
+function toRow(s: { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE" }): SubdivisionRow {
   const mapName = (val: string) => {
     if (!val) return val;
     if (val.toUpperCase() === "ZIVIRA LABS") return "Zivira";
@@ -177,7 +177,7 @@ function toRow(s: { id: string; shortName: string; subdivisionName: string; prod
   };
   return {
     id: s.id,
-    shortName: mapName(s.shortName),
+    division: mapName(s.division),
     subdivisionName: mapName(s.subdivisionName),
     productwiseCount: s.productwiseCount,
     fieldforcewiseCount: s.fieldforcewiseCount,
@@ -219,7 +219,7 @@ export function SubdivisionMaster() {
     if (!draftRow) return;
     setSaving(true);
     try {
-      await apiClient.updateSubdivision(draftRow.id, { shortName: draftRow.shortName, subdivisionName: draftRow.subdivisionName });
+      await apiClient.updateSubdivision(draftRow.id, { division: draftRow.division, subdivisionName: draftRow.subdivisionName });
       await loadSubdivisions();
       cancelInlineEdit();
     } catch (err) {
@@ -238,9 +238,9 @@ export function SubdivisionMaster() {
     setError(null);
     try {
       if (formRow.id) {
-        await apiClient.updateSubdivision(formRow.id, { shortName: formRow.shortName, subdivisionName: formRow.subdivisionName });
+        await apiClient.updateSubdivision(formRow.id, { division: formRow.division, subdivisionName: formRow.subdivisionName });
       } else {
-        await apiClient.createSubdivision({ shortName: formRow.shortName, subdivisionName: formRow.subdivisionName });
+        await apiClient.createSubdivision({ division: formRow.division, subdivisionName: formRow.subdivisionName });
       }
       await loadSubdivisions();
       setFormRow(null);
@@ -277,7 +277,7 @@ export function SubdivisionMaster() {
         </div>
         <div className="subdivision-form-card">
           {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
-          <label className="field"><span>Division</span><input autoFocus value={formRow.shortName} onChange={e => setFormRow({ ...formRow, shortName: e.target.value })} /></label>
+          <label className="field"><span>Division</span><input autoFocus value={formRow.division} onChange={e => setFormRow({ ...formRow, division: e.target.value })} /></label>
           <label className="field"><span>Sub-Division Name</span><input value={formRow.subdivisionName} onChange={e => setFormRow({ ...formRow, subdivisionName: e.target.value })} /></label>
           <button className="button" onClick={saveForm} type="button" disabled={saving}><Check size={16} /> {saving ? "Saving..." : "Save"}</button>
         </div>
@@ -314,7 +314,7 @@ export function SubdivisionMaster() {
                 return (
                   <tr key={row.id}>
                     <td>{index + 1}</td>
-                    <td>{editing ? <input className="subdivision-inline-input" value={draftRow.shortName} onChange={e => setDraftRow({ ...draftRow, shortName: e.target.value })} /> : row.shortName}</td>
+                    <td>{editing ? <input className="subdivision-inline-input" value={draftRow.division} onChange={e => setDraftRow({ ...draftRow, division: e.target.value })} /> : row.division}</td>
                     <td>{editing ? <input className="subdivision-inline-input" value={draftRow.subdivisionName} onChange={e => setDraftRow({ ...draftRow, subdivisionName: e.target.value })} /> : row.subdivisionName}</td>
                     <td>{row.productwiseCount}</td>
                     <td>{row.fieldforcewiseCount}</td>

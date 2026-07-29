@@ -80,7 +80,7 @@ export type DoctorQualification = {
 export type Subdivision = {
   id: string;
   tenantSlug: string;
-  shortName: string;
+  division: string;
   subdivisionName: string;
   productwiseCount: number;
   fieldforcewiseCount: number;
@@ -235,14 +235,14 @@ export const apiClient = {
     return request<Subdivision[]>("/company/subdivisions");
   },
 
-  createSubdivision(input: { shortName: string; subdivisionName: string; productwiseCount?: number; fieldforcewiseCount?: number }) {
+  createSubdivision(input: { division: string; subdivisionName: string; productwiseCount?: number; fieldforcewiseCount?: number }) {
     return request<Subdivision>("/company/subdivisions", {
       method: "POST",
       body: JSON.stringify(input)
     });
   },
 
-  updateSubdivision(id: string, input: Partial<{ shortName: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number }>) {
+  updateSubdivision(id: string, input: Partial<{ division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number }>) {
     return request<Subdivision>(`/company/subdivisions/${id}`, {
       method: "PUT",
       body: JSON.stringify(input)
