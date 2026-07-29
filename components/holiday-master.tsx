@@ -1,22 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, SlidersHorizontal } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Plus, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
 import { apiClient, type Holiday } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
 
 export function HolidayMaster() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [search, setSearch] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Default states list to show in frontend when database records are empty
+  const defaultStates = ["Maharashtra", "Karnataka", "Tamil Nadu", "Delhi", "Gujarat"];
 
   useEffect(() => {
-    apiClient.holidays().then((res) => setHolidays(res.data)).catch(() => setHolidays([]));
+    apiClient.holidays()
+      .then((res) => setHolidays(res.data))
+      .catch(() => setHolidays([]));
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Extract unique state names from actual fetched holidays data
+  const databaseStates = [...new Set(holidays.map(h => h.stateName))].filter(Boolean).sort();
+  const stateOptions = databaseStates.length > 0 ? databaseStates : defaultStates;
+
   const filtered = holidays.filter(
-    (h) =>
-      h.stateName.toLowerCase().includes(search.toLowerCase()) ||
-      (h.otherHolidayDescription ?? "").toLowerCase().includes(search.toLowerCase())
+    (h) => !selectedState || h.stateName.toLowerCase() === selectedState.toLowerCase()
   );
 
   return (
@@ -37,21 +56,80 @@ export function HolidayMaster() {
         </div>
       </div>
 
-      <div style={{ marginBottom: "16px" }}>
-        <input
-          placeholder="Search by state or holiday description..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: "100%",
-            maxWidth: "360px",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            border: "1px solid #e5e7eb",
-            fontSize: "14px",
-            outline: "none"
-          }}
-        />
+      {/* State Name Dropdown Filter (with text input combobox) */}
+      <div style={{ marginBottom: "20px" }} ref={dropdownRef}>
+        <div className="command-select" style={{ position: "relative", width: "fit-content", display: "flex", alignItems: "center" }}>
+          <input
+            type="text"
+            value={selectedState}
+            onChange={(e) => setSelectedState(e.target.value)}
+            placeholder=""
+            style={{
+              width: "260px",
+              height: "38px",
+              padding: "0 40px 0 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--line)",
+              background: "var(--panel)",
+              color: "var(--ink)",
+              fontSize: "13px",
+              outline: "none",
+              boxSizing: "border-box"
+            }}
+          />
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            type="button"
+            style={{
+              position: "absolute",
+              right: "1px",
+              top: "1px",
+              bottom: "1px",
+              width: "36px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderTopRightRadius: "5px",
+              borderBottomRightRadius: "5px"
+            }}
+            aria-label="Toggle Dropdown"
+          >
+            <ChevronDown size={15} style={{ color: "var(--muted)" }} />
+          </button>
+
+          {dropdownOpen && (
+            <div className="command-select-menu" style={{ width: "260px", top: "calc(100% + 6px)", left: 0, right: "auto" }}>
+              <button
+                className={selectedState === "" ? "command-select-option command-select-option-active" : "command-select-option"}
+                onClick={() => {
+                  setSelectedState("");
+                  setDropdownOpen(false);
+                }}
+                type="button"
+              >
+                <span>All States</span>
+                {selectedState === "" && <Check size={14} />}
+              </button>
+              {stateOptions.map((state) => (
+                <button
+                  key={state}
+                  className={selectedState === state ? "command-select-option command-select-option-active" : "command-select-option"}
+                  onClick={() => {
+                    setSelectedState(state);
+                    setDropdownOpen(false);
+                  }}
+                  type="button"
+                >
+                  <span>{state}</span>
+                  {selectedState === state && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="subdivision-stats" style={{ marginBottom: "20px" }}>
@@ -66,10 +144,10 @@ export function HolidayMaster() {
           <thead>
             <tr>
               <th>Sl. No</th>
-              <th>StateName</th>
-              <th>Weekend holiday</th>
-              <th>Other holiday date</th>
-              <th>Other holiday Description</th>
+              <th>State Name</th>
+              <th>Weekend Holiday</th>
+              <th>Other Holiday Date</th>
+              <th>Other Holiday Description</th>
             </tr>
           </thead>
           <tbody>

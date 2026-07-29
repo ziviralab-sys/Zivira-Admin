@@ -14,15 +14,15 @@ function CategoryForm({ row, onSave, onBack, saving, error }: { row: Partial<Pro
       <div className="subdivision-head">
         <div>
           <p className="subdivision-eyebrow">Master Setup</p>
-          <h2>{isEdit ? "Edit Product Category" : "Add Product Category"}</h2>
-          <p>Manage full category names used across the platform.</p>
+          <h2>{isEdit ? "Edit Product Therapy" : "Add Product Therapy"}</h2>
+          <p>Manage full therapy names used across the platform.</p>
         </div>
         <button className="button button-secondary" onClick={onBack} type="button"><RotateCcw size={16} /> Back</button>
       </div>
       <div className="subdivision-form-card">
         {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
         <label className="field">
-          <span>* Category Name</span>
+          <span>* Therapy Name</span>
           <input value={form.categoryName} onChange={e => setForm(f => ({ ...f, categoryName: e.target.value }))} placeholder="e.g. ANTIALLEGY" />
         </label>
         <button className="button" onClick={() => onSave(form.shortName, form.categoryName)} type="button" disabled={saving || !form.categoryName.trim()}>
@@ -46,8 +46,8 @@ function BulkEditView({ rows, onSave, onBack, saving }: { rows: ProductCategory[
       <div className="subdivision-head">
         <div>
           <p className="subdivision-eyebrow">Bulk Operations</p>
-          <h2>Bulk Edit — Product Category</h2>
-          <p>Edit all category names in one go.</p>
+          <h2>Bulk Edit — Product Therapy</h2>
+          <p>Edit all therapy names in one go.</p>
         </div>
         <button className="button button-secondary" onClick={onBack} type="button"><RotateCcw size={16} /> Back</button>
       </div>
@@ -190,7 +190,7 @@ function DeactivateDialog({ name, onConfirm, onCancel }: { name: string; onConfi
             <Trash2 size={20} color="#ef4444" />
           </span>
           <div>
-            <h3 style={{ margin:0, fontSize:"17px", fontWeight:700, color:"var(--ink)" }}>Deactivate Category?</h3>
+            <h3 style={{ margin:0, fontSize:"17px", fontWeight:700, color:"var(--ink)" }}>Deactivate Therapy?</h3>
             <p style={{ margin:"4px 0 0", fontSize:"13px", color:"var(--muted)" }}>This can be reversed via Reactivation.</p>
           </div>
         </div>
@@ -344,8 +344,8 @@ export function ProductCategoryMaster() {
         <div className="subdivision-head">
           <div>
             <p className="subdivision-eyebrow">Master Setup</p>
-            <h2>Product Category</h2>
-            <p>Create and manage product categories used across the platform.</p>
+            <h2>Product Therapy</h2>
+            <p>Create and manage product therapies used across the platform.</p>
           </div>
           <div className="subdivision-actions">
             <button className="button button-secondary" onClick={() => setView("reactivation")} type="button"><RefreshCw size={16} /> Reactivation</button>
@@ -358,7 +358,7 @@ export function ProductCategoryMaster() {
         {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}
 
         <div className="subdivision-stats" style={{ marginBottom:"20px" }}>
-          <article><span>Total Categories</span><strong>{rows.length}</strong></article>
+          <article><span>Total Therapies</span><strong>{rows.length}</strong></article>
           <article><span>Total Products</span><strong>{rows.reduce((s, r) => s + r.noOfProducts, 0)}</strong></article>
           <article><span>Inactive</span><strong>{inactive.length}</strong></article>
         </div>
@@ -368,7 +368,7 @@ export function ProductCategoryMaster() {
             <thead>
               <tr>
                 <th>S.No</th>
-                <th>Category Name</th>
+                <th>Therapy Name</th>
                 <th>No of Products</th>
                 <th>Inline Edit</th>
                 <th>Edit</th>
@@ -424,7 +424,7 @@ export function ProductCategoryMaster() {
                   </tr>
                 );
               })}
-              {!loading && rows.length === 0 && <tr><td colSpan={6} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No product categories yet</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={6} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No product therapies yet</td></tr>}
             </tbody>
           </table>
         </div>

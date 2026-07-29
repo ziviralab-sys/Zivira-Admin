@@ -185,9 +185,9 @@ export function DoctorCelebrations() {
 
       {/* Stats */}
       <div className="subdivision-stats" style={{ marginBottom:20 }}>
-        <article><span>DOB This Month</span><strong style={{ color:"#be185d" }}>{dobData.filter(r => (r.dob ?? "").includes(selectedMonth)).length}</strong></article>
-        <article><span>DOW This Month</span><strong style={{ color:"#7c3aed" }}>{dowData.filter(r => (r.dow ?? "").includes(selectedMonth)).length}</strong></article>
-        <article><span>Both Events</span><strong style={{ color:"#0369a1" }}>{bothData.filter(r => (r.dob ?? r.dow ?? "").includes(selectedMonth)).length}</strong></article>
+        <article><span>DOB This Month</span><strong style={{ color:"var(--brand)" }}>{dobData.filter(r => (r.dob ?? "").includes(selectedMonth)).length}</strong></article>
+        <article><span>DOW This Month</span><strong style={{ color:"var(--blue)" }}>{dowData.filter(r => (r.dow ?? "").includes(selectedMonth)).length}</strong></article>
+        <article><span>Both Events</span><strong style={{ color:"var(--amber)" }}>{bothData.filter(r => (r.dob ?? r.dow ?? "").includes(selectedMonth)).length}</strong></article>
         <article><span>Total Records</span><strong>{dobData.length + dowData.length}</strong></article>
       </div>
 

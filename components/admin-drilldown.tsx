@@ -21,6 +21,10 @@ import { TerritoryMaster } from "@/components/territory-master";
 import { TerritoryListedDoctor } from "@/components/territory-listed-doctor";
 import { ChemistMaster } from "@/components/chemist-master";
 import { HospitalMaster } from "@/components/hospital-master";
+import { StatewiseRateFixation } from "@/components/statewise-rate-fixation";
+import { ManagerAllowanceAutomatic } from "@/components/manager-allowance-automatic";
+import { ManagerSfcUpdation } from "@/components/manager-sfc-updation";
+import { ManagerWorkTypeAllowance } from "@/components/manager-work-type-allowance";
 
 export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: string[] }) {
   const pathStr = path.join("/");
@@ -73,6 +77,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
     return <ProductDetailMaster />;
   }
 
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/product/statewise-rate-fixation") {
+    return <StatewiseRateFixation />;
+  }
+
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/category") {
     return <DoctorCategoryMaster />;
   }
@@ -103,6 +111,18 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
 
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/expense") {
     return <ExpenseMaster />;
+  }
+
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/manager-expense/allowance-fixation-automatic") {
+    return <ManagerAllowanceAutomatic />;
+  }
+
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/manager-expense/sfc-updation") {
+    return <ManagerSfcUpdation />;
+  }
+
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/manager-expense/wrk-type-wise-allowance-fix") {
+    return <ManagerWorkTypeAllowance />;
   }
 
   if (pathStr.startsWith("division-dashboard/division-navigation-tabs/division-master/statewise-holiday-fixation")) {

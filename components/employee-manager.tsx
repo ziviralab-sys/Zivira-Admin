@@ -106,23 +106,23 @@ export function EmployeeManager() {
           <thead>
             <tr>
               <th>Sl. No</th>
-              <th>EmployeeName</th>
+              <th>Employee Name</th>
               <th>Date of Birth</th>
-              <th>emailid</th>
-              <th>mobilecontactnumber</th>
-              <th>division</th>
-              <th>rolename</th>
-              <th>Employeecode</th>
-              <th>joindate</th>
-              <th>address1</th>
-              <th>landmark</th>
-              <th>location</th>
-              <th>city</th>
-              <th>State name</th>
-              <th>country</th>
-              <th>postalcode</th>
-              <th>HQ /Territory</th>
-              <th>L1 Reporting manager employeecode</th>
+              <th>Email ID</th>
+              <th>Mobile / Contact Number</th>
+              <th>Division</th>
+              <th>Role Name</th>
+              <th>Employee Code</th>
+              <th>Join Date</th>
+              <th>Address 1</th>
+              <th>Landmark</th>
+              <th>Location</th>
+              <th>City</th>
+              <th>State Name</th>
+              <th>Country</th>
+              <th>Postal Code</th>
+              <th>HQ / Territory</th>
+              <th>L1 Reporting Manager Employee Code</th>
               <th>L1 Division</th>
               <th>L1 Role</th>
             </tr>

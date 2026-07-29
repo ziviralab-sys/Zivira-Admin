@@ -27,7 +27,7 @@ export function TerritoryMaster() {
       <div className="subdivision-head">
         <div>
           <p className="subdivision-eyebrow">Field Force Entries</p>
-          <h2>Territory (Patch Name) Mapping</h2>
+          <h2>Patch Name</h2>
           <p>Configure mapping between field agents, employee codes, patches, and customers.</p>
         </div>
         <div className="subdivision-actions">

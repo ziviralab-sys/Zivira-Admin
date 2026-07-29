@@ -106,8 +106,8 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
           node("View - Field Forcewise", "view-field-forcewise", "division")
         ]),
         node("Product", "product", "division", [
-          node("Category", "category", "division"),
-          node("Group", "group", "division"),
+          node("Therapy", "category", "division"),
+          node("Molecule", "group", "division"),
           node("Brand", "brand", "division"),
           node("Product Detail", "product-detail", "division"),
           node("Statewise - Rate Fixation", "statewise-rate-fixation", "division")
@@ -124,7 +124,7 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
         ]),
         node("Input", "input", "division"),
         node("Field Force Entries", "field-force-entries", "division", [
-          node("Territory", "territory", "division"),
+          node("Patch Name", "territory", "division"),
           node("Territory - Listed Doctor", "territory-listed-doctor", "division"),
           node("Territory Bulk Deactivation", "territory-bulk-deactivation", "division"),
           node("Listed Doctor", "listed-doctor", "division"),
@@ -146,18 +146,18 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
           node("Statewise - Entry Status", "statewise-entry-status", "division"),
           node("Super Stockist - Create & Map", "super-stockist-create-map", "division")
         ]),
-        node("Expense", "expense", "division", [
+        node("Expense Setup", "expense", "division", [
           node("SFC Updation", "sfc-updation", "division"),
           node("SFC View", "sfc-view", "division"),
           node("Allowance Fixation", "allowance-fixation", "division"),
-          node("Wrk Type Wise - Allowance Fix", "wrk-type-wise-allowance-fix", "division"),
+          node("Work Type Wise - Allowance Fix", "wrk-type-wise-allowance-fix", "division"),
           node("Fixed/Variable Expense Parameter", "fixed-variable-expense-parameter", "division"),
           node("Expense Setup", "expense-setup", "division")
         ]),
         node("Manager Expense", "manager-expense", "division", [
-          node("Allowance Fixation (Automatic)", "allowance-fixation-automatic", "division"),
+          node("Allowance Fixation", "allowance-fixation-automatic", "division"),
           node("SFC Updation", "sfc-updation", "division"),
-          node("Wrk Type Wise - Allowance Fix", "wrk-type-wise-allowance-fix", "division")
+          node("Work Type Wise - Allowance Fix", "wrk-type-wise-allowance-fix", "division")
         ]),
         node("Personal Information", "personal-information", "division", [
           node("Personal - Entry", "personal-entry", "division"),

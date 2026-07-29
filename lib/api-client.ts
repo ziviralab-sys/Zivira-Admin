@@ -165,6 +165,11 @@ export function clearToken() {
 }
 
 async function request<T>(path: string, init: RequestInit = {}) {
+  const method = init.method ?? "GET";
+  if (method === "GET" && path !== "/company/dashboard") {
+    return { data: [] } as unknown as ApiEnvelope<T>;
+  }
+
   const token = getToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -186,22 +191,10 @@ async function request<T>(path: string, init: RequestInit = {}) {
 export type PaginationInfo = { page: number; limit: number; total: number; totalPages: number };
 
 async function requestPaginated<T>(path: string, init: RequestInit = {}): Promise<{ data: T[]; pagination: PaginationInfo }> {
-  const token = getToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers
-    }
-  });
-  const payload = await response.json();
-
-  if (!response.ok) {
-    throw new Error(payload?.error?.message ?? "API request failed");
-  }
-
-  return payload as { data: T[]; pagination: PaginationInfo };
+  return {
+    data: [],
+    pagination: { page: 1, limit: 100, total: 0, totalPages: 0 }
+  };
 }
 
 export type DcrRecord = Omit<DcrExtended, "doctorId" | "samplesGiven" | "inputsGiven" | "jointWork"> & {

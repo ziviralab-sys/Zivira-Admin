@@ -23,7 +23,7 @@ export function ProductGroupMaster() {
       <div className="subdivision-head">
         <div>
           <p className="subdivision-eyebrow">Master Setup</p>
-          <h2>Product Group (Molecule)</h2>
+          <h2>Product Molecule</h2>
           <p>Manage and map molecules to corresponding therapy classifications.</p>
         </div>
         <div className="subdivision-actions">
@@ -31,7 +31,7 @@ export function ProductGroupMaster() {
             <SlidersHorizontal size={16} /> Filters
           </button>
           <button className="button" type="button">
-            <Plus size={16} /> Add Group
+            <Plus size={16} /> Add Molecule
           </button>
         </div>
       </div>
@@ -88,7 +88,7 @@ export function ProductGroupMaster() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={3} style={{ textAlign: "center", color: "var(--muted)", padding: "32px" }}>
-                  No product groups found
+                  No product molecules found
                 </td>
               </tr>
             )}

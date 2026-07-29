@@ -87,14 +87,14 @@ function FieldForceView({ subdivisionName, onBack }: { subdivisionName: string; 
           <tbody>
             {filtered.map((r) => (
               <tr key={r.sno}>
-                <td style={{ color:"#9ca3af", fontWeight:500 }}>{r.sno}</td>
-                <td><strong style={{ color:"#111827" }}>{r.name}</strong></td>
+                <td style={{ color:"var(--muted)", fontWeight:500 }}>{r.sno}</td>
+                <td><strong style={{ color:"var(--ink)" }}>{r.name}</strong></td>
                 <td><DesignationBadge designation={r.designation} /></td>
-                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"#f3f4f6", fontSize:"12px", fontWeight:600, color:"#374151" }}>{r.hq}</span></td>
-                <td style={{ fontSize:"13px", color:"#6b7280" }}>{r.reportingTo}</td>
+                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{r.hq}</span></td>
+                <td style={{ fontSize:"13px", color:"var(--muted)" }}>{r.reportingTo}</td>
               </tr>
             ))}
-            {filtered.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", color:"#9ca3af", padding:"32px" }}>No results found</td></tr>}
+            {filtered.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No results found</td></tr>}
           </tbody>
         </table>
       </div>
@@ -129,10 +129,10 @@ function ProductwiseView({ subdivisionName, onBack }: { subdivisionName: string;
           <tbody>
             {products.map(p => (
               <tr key={p.sno}>
-                <td style={{ color:"#9ca3af", fontWeight:500 }}>{p.sno}</td>
-                <td><strong style={{ color:"#111827" }}>{p.productName}</strong></td>
-                <td style={{ color:"#6b7280", fontSize:"13px" }}>{p.description}</td>
-                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"#f3f4f6", fontSize:"12px", fontWeight:600, color:"#374151" }}>{p.saleUnit}</span></td>
+                <td style={{ color:"var(--muted)", fontWeight:500 }}>{p.sno}</td>
+                <td><strong style={{ color:"var(--ink)" }}>{p.productName}</strong></td>
+                <td style={{ color:"var(--muted)", fontSize:"13px" }}>{p.description}</td>
+                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{p.saleUnit}</span></td>
                 <td><CategoryBadge category={p.category} /></td>
                 <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"#eff6ff", fontSize:"12px", fontWeight:700, color:"#2563eb" }}>{p.group}</span></td>
               </tr>
@@ -147,17 +147,17 @@ function ProductwiseView({ subdivisionName, onBack }: { subdivisionName: string;
 function DeleteConfirmDialog({ name, onConfirm, onCancel }: { name: string; onConfirm: () => void; onCancel: () => void }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#fff", borderRadius:"16px", padding:"32px 28px", maxWidth:"400px", width:"90%", boxShadow:"0 20px 60px rgba(0,0,0,0.18)" }}>
+      <div style={{ background:"var(--panel)", borderRadius:"16px", padding:"32px 28px", maxWidth:"400px", width:"90%", boxShadow:"0 20px 60px rgba(0,0,0,0.18)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px" }}>
           <span style={{ background:"#fef2f2", borderRadius:"50%", width:"44px", height:"44px", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Trash2 size={20} color="#ef4444" />
           </span>
           <div>
-            <h3 style={{ margin:0, fontSize:"17px", fontWeight:700, color:"#111827" }}>Deactivate Sub-Division?</h3>
-            <p style={{ margin:"4px 0 0", fontSize:"13px", color:"#6b7280" }}>This action cannot be undone.</p>
+            <h3 style={{ margin:0, fontSize:"17px", fontWeight:700, color:"var(--ink)" }}>Deactivate Sub-Division?</h3>
+            <p style={{ margin:"4px 0 0", fontSize:"13px", color:"var(--muted)" }}>This action cannot be undone.</p>
           </div>
         </div>
-        <p style={{ fontSize:"14px", color:"#374151", margin:"0 0 24px", lineHeight:1.6 }}>
+        <p style={{ fontSize:"14px", color:"var(--ink)", margin:"0 0 24px", lineHeight:1.6 }}>
           Are you sure you want to deactivate <strong>{name}</strong>? All associated product and fieldforce mappings will be affected.
         </p>
         <div style={{ display:"flex", gap:"10px", justifyContent:"flex-end" }}>
@@ -310,7 +310,7 @@ export function SubdivisionMaster() {
               <tr><th>S.No</th><th>Division</th><th>Sub Division Name</th><th>Productwise Count</th><th>Fieldforcewise Count</th><th>Inline Edit</th><th>Edit</th><th>Products</th><th>Field Force</th><th>Deactivate</th></tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={10} style={{ textAlign:"center", color:"#9ca3af", padding:"32px" }}>Loading...</td></tr>}
+              {loading && <tr><td colSpan={10} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>Loading...</td></tr>}
               {!loading && rows.map((row, index) => {
                 const editing = inlineEditId === row.id && draftRow;
                 return (
@@ -323,8 +323,8 @@ export function SubdivisionMaster() {
                     <td>
                       {editing ? (
                         <span className="subdivision-inline-actions">
-                          <button aria-label="Update" onClick={updateInlineEdit} title="Update" type="button" disabled={saving}><Check size={15} /></button>
-                          <button aria-label="Cancel" onClick={cancelInlineEdit} title="Cancel" type="button" disabled={saving}><X size={15} /></button>
+                           <button aria-label="Update" onClick={updateInlineEdit} title="Update" type="button" disabled={saving}><Check size={15} /></button>
+                           <button aria-label="Cancel" onClick={cancelInlineEdit} title="Cancel" type="button" disabled={saving}><X size={15} /></button>
                         </span>
                       ) : (
                         <button className="subdivision-icon-button" onClick={() => beginInlineEdit(row)} title="Inline Edit" type="button"><Pencil size={15} /></button>
@@ -345,7 +345,7 @@ export function SubdivisionMaster() {
                   </tr>
                 );
               })}
-              {!loading && rows.length === 0 && <tr><td colSpan={10} style={{ textAlign:"center", color:"#9ca3af", padding:"32px" }}>No sub-divisions yet</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={10} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No sub-divisions yet</td></tr>}
             </tbody>
           </table>
         </div>
