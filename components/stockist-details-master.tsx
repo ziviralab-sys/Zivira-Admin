@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { excelDealers } from "@/lib/excel-mock-data";
+import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function StockistDetailsMaster({ isSuperStockist = false }: { isSuperStockist?: boolean }) {
   const [dealers, setDealers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    setDealers(excelDealers);
-  }, []);
 
   const filtered = dealers.filter(
     (d) =>

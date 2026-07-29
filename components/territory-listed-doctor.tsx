@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 
 export function TerritoryListedDoctor() {
-  const [items, setItems] = useState([
-    { sNo: 1, customerName: "A JAYA CHANDRA REDDY", qualification: "MBBS, MD" },
-    { sNo: 2, customerName: "ABRITHI DHAS", qualification: "MBBS" },
-    { sNo: 3, customerName: "ALEKYA GANDU", qualification: "DLO, MS" }
-  ]);
+  const [items, setItems] = useState<
+    Array<{
+      sNo: number;
+      customerName: string;
+      qualification: string;
+    }>
+  >([]);
 
   return (
     <section className="subdivision-console">
