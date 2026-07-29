@@ -132,24 +132,24 @@ export function EmployeeManager() {
                 <tr key={employee.id}>
                   <td>{i + 1}</td>
                   <td><strong>{employee.name}</strong></td>
-                  <td>15-Jul-1990</td>
-                  <td>employee{i + 1}@zivira.com</td>
-                  <td>9876543210</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
                   <td>{employee.division}</td>
                   <td>{employee.designation}</td>
                   <td>{employee.employeeCode}</td>
-                  <td>12-Jan-2020</td>
-                  <td>{employee.address || "NO: 3/597-1"}</td>
-                  <td>Near Tech Park</td>
-                  <td>Outer Ring Road</td>
-                  <td>Bengaluru</td>
-                  <td>Karnataka</td>
-                  <td>India</td>
-                  <td>560100</td>
-                  <td>BENGALURU</td>
-                  <td>MGR001</td>
+                  <td>—</td>
+                  <td>{employee.address || "—"}</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>{employee.territory}</td>
+                  <td>{employee.reportingManager || "—"}</td>
                   <td>{employee.division}</td>
-                  <td>REGIONAL MANAGER</td>
+                  <td>—</td>
                 </tr>
               );
             })}
