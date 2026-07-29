@@ -4,6 +4,7 @@ import type { Employee } from "@zivira/types";
 import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { apiClient, type ProductCatalogItem } from "@/lib/api-client";
+import { formatDate } from "@/lib/format-date";
 
 type SubdivisionRow = { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
 type ProductRow = { sno: number; productName: string; description: string; saleUnit: string; category: string; group: string; };
@@ -645,22 +646,58 @@ export function SubdivisionFieldforcewise() {
             <article><span>Sub-Division</span><strong>{selected}</strong></article>
           </div>
 
-          <div className="subdivision-table-card">
+          <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
             <table className="subdivision-table">
               <thead>
-                <tr><th>S.No</th><th>FieldForce Name</th><th>Designation</th><th>HQ</th><th>Reporting To</th></tr>
+                <tr>
+                  <th>S.No</th>
+                  <th>Employee Name</th>
+                  <th>Date of Birth</th>
+                  <th>Email ID</th>
+                  <th>Mobile Contact Number</th>
+                  <th>Division</th>
+                  <th>Role Name</th>
+                  <th>Employee Code</th>
+                  <th>Join Date</th>
+                  <th>Address 1</th>
+                  <th>Landmark</th>
+                  <th>Location</th>
+                  <th>City</th>
+                  <th>State Name</th>
+                  <th>Country</th>
+                  <th>Postal Code</th>
+                  <th>HQ / Territory</th>
+                  <th>L1 Reporting Manager Code</th>
+                  <th>L1 Division</th>
+                  <th>L1 Role</th>
+                </tr>
               </thead>
               <tbody>
                 {rows.map((r, index) => (
                   <tr key={r.id}>
                     <td style={{ color: "#9ca3af", fontWeight: 500 }}>{index + 1}</td>
                     <td><strong style={{ color: "#111827" }}>{r.name}</strong></td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{formatDate(r.dob)}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.email ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.phone ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.division ?? "—"}</td>
                     <td><DesignationBadge designation={r.designation} /></td>
-                    <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151" }}>{r.territory ?? "—"}</span></td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.employeeCode ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{formatDate(r.joinDate)}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.address1 ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.landmark ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.location ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.city ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.state ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.country ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.postalCode ?? "—"}</td>
+                    <td><span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "6px", background: "#f3f4f6", fontSize: "12px", fontWeight: 600, color: "#374151", whiteSpace: "nowrap" }}>{r.territory ?? "—"}</span></td>
                     <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.reportingManager ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.l1Division ?? "—"}</td>
+                    <td style={{ fontSize: "13px", color: "#6b7280" }}>{r.l1Role ?? "—"}</td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9ca3af", padding: "32px" }}>No field force found</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={20} style={{ textAlign: "center", color: "#9ca3af", padding: "32px" }}>No field force found</td></tr>}
               </tbody>
             </table>
           </div>
