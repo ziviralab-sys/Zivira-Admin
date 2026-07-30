@@ -49,7 +49,7 @@ export function ManagerSfcUpdation() {
             placeholder=""
             style={{
               width: "200px",
-              height: "38px",
+              height: "30px",
               padding: "0 12px",
               borderRadius: "6px",
               border: "1px solid var(--line)",
@@ -66,9 +66,9 @@ export function ManagerSfcUpdation() {
             <button
               className="command-select-button"
               style={{
-                width: "160px",
-                height: "38px",
-                minHeight: "38px",
+                width: "260px",
+                height: "30px",
+                minHeight: "30px",
                 paddingLeft: "16px",
                 position: "relative",
                 display: "flex",
@@ -83,7 +83,7 @@ export function ManagerSfcUpdation() {
             </button>
 
             {dropdownOpen && (
-              <div className="command-select-menu" style={{ width: "160px", top: "calc(100% + 6px)", left: 0, right: "auto" }}>
+              <div className="command-select-menu" style={{ width: "260px", top: "calc(100% + 6px)", left: 0, right: "auto" }}>
                 {dummyOptions.map((opt) => (
                   <button
                     key={opt}

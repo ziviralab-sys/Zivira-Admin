@@ -14,6 +14,7 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
   const [submissionBasedOn, setSubmissionBasedOn] = useState("");
   const [lastDayOsWork, setLastDayOsWork] = useState("");
   const [singleDayOsWork, setSingleDayOsWork] = useState("");
+  const [mgrExpenses, setMgrExpenses] = useState([{ designation: "", mode: "" }]);
 
   // Right Column States (for policy form mode)
   const [rangeFrom, setRangeFrom] = useState("1");
@@ -358,6 +359,30 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   />
                   OS Allowance
                 </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--ink)", cursor: "pointer", fontWeight: 600 }}>
+                  <input
+                    type="radio"
+                    name="singleDayOsWork"
+                    checked={singleDayOsWork === "EX Allowance"}
+                    onClick={() => toggleRadio(singleDayOsWork, "EX Allowance", setSingleDayOsWork)}
+                    onChange={() => {}}
+                    style={{ accentColor: "#0284c7", width: "16px", height: "16px" }}
+                  />
+                  EX Allowance
+                </label>
+              </div>
+            </div>
+
+            {/* Mgr Expense Setup */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+              <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", borderBottom: "2px solid #9d174d", width: "fit-content", paddingBottom: "2px" }}>
+                Mgr Expense Setup
+              </label>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "180px 140px 100px", gap: "12px", fontSize: "13px", fontWeight: 700, color: "var(--ink)", marginTop: "4px" }}>
+                <div>Designation</div>
+                <div>Mode</div>
+                <div style={{ textAlign: "center" }}>Add/Del</div>
               </div>
             </div>
 

@@ -266,16 +266,40 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <aside className={clsx("sidebar", !sidebarOpen && "sidebar-collapsed")}>
-        <Link className="brand" href="/admin/home">
-          <span className="brand-mark">Z</span>
+      <aside className={clsx("sidebar", !sidebarOpen && "sidebar-collapsed")} style={{ paddingTop: 0 }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          borderBottom: "1px solid var(--line)",
+          height: "72px",
+          marginLeft: sidebarOpen ? "-14px" : "-8px",
+          marginRight: sidebarOpen ? "-14px" : "-8px",
+          paddingLeft: sidebarOpen ? "22px" : "16px",
+          paddingRight: sidebarOpen ? "22px" : "16px"
+        }}>
+          <Link className="brand" href="/admin/home" style={{ borderBottom: "none", padding: 0, gap: "12px" }}>
+            <span className="brand-mark">Z</span>
+            {sidebarOpen && (
+              <span>
+                <p className="brand-title">Zivira Labs</p>
+                <p className="brand-subtitle">Admin Portal</p>
+              </span>
+            )}
+          </Link>
           {sidebarOpen && (
-            <span>
-              <p className="brand-title">Zivira Labs</p>
-              <p className="brand-subtitle">Admin Portal</p>
-            </span>
+            <button
+              className="button button-secondary sidebar-toggle-btn"
+              onClick={() => setSidebarOpen(false)}
+              title="Collapse sidebar"
+              type="button"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose size={18} />
+            </button>
           )}
-        </Link>
+        </div>
 
         <nav aria-label="Company Admin navigation">
           {companyNav.map((group) => (
@@ -334,15 +358,17 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
       <main className="main">
         <header className="topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              className="button button-secondary sidebar-toggle-btn"
-              onClick={() => setSidebarOpen((o) => !o)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-              type="button"
-              aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              {sidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
-            </button>
+            {!sidebarOpen && (
+              <button
+                className="button button-secondary sidebar-toggle-btn"
+                onClick={() => setSidebarOpen(true)}
+                title="Expand sidebar"
+                type="button"
+                aria-label="Expand sidebar"
+              >
+                <PanelLeftOpen size={18} />
+              </button>
+            )}
             <div>
               <h1>Tenant Operations</h1>
               <p>Zivira Labs · platform tabs</p>
