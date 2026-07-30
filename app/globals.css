@@ -2151,13 +2151,19 @@ tr:last-child td {
   color: #ffffff !important;
 }
 
-/* ── Sticky Table Headers below Topbar (68px offset) ── */
+/* ── Table Headers ──
+   Previously used `position: sticky; top: 68px` here to pin headers below the
+   topbar while scrolling. Chromium computes a sticky offset on table <th> cells
+   as an *additive* shift from their static position (th.y = staticY + top)
+   rather than the correct sticky clamp (th.y = max(staticY, scrollThreshold)),
+   so any non-zero `top` pushes the header down over the table's own first
+   body row on every Masters table, hiding it (reproduced independent of
+   whether sticky targets th, tr, or thead — only top:0 or no sticky avoids
+   the bug). Reverted to static headers; kept the background/shadow so the
+   header still reads as visually separated from the body rows. */
 .subdivision-table thead th,
 .command-table thead th,
 table thead th {
-  position: sticky !important;
-  top: 68px !important;
-  z-index: 2 !important;
   background-color: var(--panel) !important;
   box-shadow: inset 0 -1px 0 var(--line) !important;
 }
