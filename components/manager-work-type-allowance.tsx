@@ -2,14 +2,21 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 export function ManagerWorkTypeAllowance() {
   const [inputText, setInputText] = useState("");
   const [selectedDropdownVal, setSelectedDropdownVal] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dummyOptions, setDummyOptions] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const dummyOptions: string[] = [];
+  useEffect(() => {
+    // "Work type" here is the Expense sheet's Daily/Monthly work-basis column.
+    apiClient.expenses()
+      .then(res => setDummyOptions([...new Set(res.data.map(e => e.dailyWork).filter((v): v is string => !!v))].sort()))
+      .catch(() => setDummyOptions([]));
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

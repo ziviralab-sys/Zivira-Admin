@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, SlidersHorizontal } from "lucide-react";
 import { ExpenseMaster } from "./expense-master";
+import { apiClient, type Dealer } from "@/lib/api-client";
 
 export function StockistDetailsMaster({ isSuperStockist = false }: { isSuperStockist?: boolean }) {
-  const [dealers, setDealers] = useState<any[]>([]);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
   const [search, setSearch] = useState("");
   const [activeSubTab, setActiveSubTab] = useState("create_map");
+
+  useEffect(() => {
+    apiClient.dealers().then(res => setDealers(res.data)).catch(() => setDealers([]));
+  }, []);
 
   const filtered = dealers.filter(
     (d) =>
       d.dealerName.toLowerCase().includes(search.toLowerCase()) ||
-      d.dealerCode.toLowerCase().includes(search.toLowerCase())
+      (d.sourceSNo != null && String(d.sourceSNo).includes(search))
   );
 
   return (
@@ -142,26 +147,35 @@ export function StockistDetailsMaster({ isSuperStockist = false }: { isSuperStoc
                 )}
               </thead>
               <tbody>
-                {filtered.slice(0, 50).map((row, i) => (
-                  <tr key={i}>
-                    <td><strong style={{ color: "var(--ink)" }}>{row.dealerCode}</strong></td>
+                {filtered.slice(0, 50).map((row) => (
+                  <tr key={row.id}>
+                    <td><strong style={{ color: "var(--ink)" }}>{row.sourceSNo ?? "--"}</strong></td>
                     <td>{row.dealerName}</td>
-                    <td>{row.contactPerson}</td>
+                    <td>{row.contactPersonName || "--"}</td>
                     <td>--</td>
                     <td>--</td>
-                    <td>{row.email || "--"}</td>
+                    <td>{row.dealerEmail || "--"}</td>
                     <td>--</td>
                     <td style={{ fontSize: "12px", color: "var(--muted)", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {row.address || "--"}
                     </td>
-                    <td>{row.territory}</td>
-                    <td>{row.headquarters}</td>
-                    <td>{row.state}</td>
+                    {isSuperStockist ? (
+                      <>
+                        <td>{row.location || "--"}</td>
+                        <td>{row.city || "--"}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{row.patchName || "--"}</td>
+                        <td>--</td>
+                      </>
+                    )}
+                    <td>{row.state || "--"}</td>
                     <td>{row.pincode || "--"}</td>
                     {isSuperStockist && (
                       <>
-                        <td style={{ fontFamily: "monospace", fontSize: "11px" }}>GST29AAAAA1111A</td>
-                        <td style={{ fontFamily: "monospace", fontSize: "11px" }}>DL-20-123456</td>
+                        <td style={{ fontFamily: "monospace", fontSize: "11px" }}>--</td>
+                        <td style={{ fontFamily: "monospace", fontSize: "11px" }}>--</td>
                       </>
                     )}
                   </tr>
