@@ -2,14 +2,22 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 export function ManagerAllowanceAutomatic() {
   const [inputText, setInputText] = useState("");
   const [selectedDropdownVal, setSelectedDropdownVal] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dummyOptions, setDummyOptions] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const dummyOptions: string[] = [];
+  useEffect(() => {
+    // Allowance fixation is role-based, so the dropdown lists the distinct role/designation
+    // values already imported from the Employee sheet.
+    apiClient.employees()
+      .then(res => setDummyOptions([...new Set(res.data.map(e => e.designation).filter(Boolean))].sort()))
+      .catch(() => setDummyOptions([]));
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

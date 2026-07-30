@@ -2,6 +2,7 @@
 
 import { Cake, Download, Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
+import { apiClient } from "@/lib/api-client";
 
 type DobRow = {
   sno: number;
@@ -17,13 +18,6 @@ type DobRow = {
   dow?: string;
   phone: string;
 };
-
-const dobData: DobRow[] = [];
-
-const dowData: DobRow[] = [];
-
-const bothData: DobRow[] = [];
-
 
 type TabKey = "dob" | "dow" | "both";
 
@@ -100,17 +94,14 @@ function CelebTable({ rows, type }: { rows: DobRow[]; type: TabKey }) {
   );
 }
 
-const TABS: { key: TabKey; label: string; icon: string; count: number }[] = [
-  { key:"dob",  label:"Date of Birth",            icon:"🎂", count: dobData.length },
-  { key:"dow",  label:"Date of Wedding",           icon:"💍", count: dowData.length },
-  { key:"both", label:"DOB + DOW (Same Month)",    icon:"🎉", count: bothData.length },
-];
-
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 export function DoctorCelebrations() {
   const [activeTab, setActiveTab] = useState<TabKey>("dob");
   const [selectedMonth, setSelectedMonth] = useState("May");
+  const [dobData, setDobData] = useState<DobRow[]>([]);
+  const [dowData, setDowData] = useState<DobRow[]>([]);
+  const [bothData, setBothData] = useState<DobRow[]>([]);
 
   const [openMenu, setOpenMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -125,13 +116,67 @@ export function DoctorCelebrations() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const activeData = useMemo(() => {
-    const src = activeTab === "dob" ? dobData : activeTab === "dow" ? dowData : bothData;
-    return src.filter(r => {
-      const date = r.dob ?? r.dow ?? "";
-      return date.includes(selectedMonth);
-    });
-  }, [activeTab, selectedMonth]);
+  useEffect(() => {
+    const monthNum = months.indexOf(selectedMonth) + 1;
+    if (!monthNum) return;
+
+    apiClient.employees()
+      .then(empRes => {
+        const employeeByCode = new Map(empRes.data.map(e => [e.employeeCode, e]));
+
+        return apiClient.doctorCelebrations(monthNum).then(docRes => {
+          const dobRows: DobRow[] = [];
+          const dowRows: DobRow[] = [];
+          const bothRows: DobRow[] = [];
+          let sno = 0;
+
+          for (const doctor of docRes.data) {
+            const dobMonth = doctor.dob ? new Date(doctor.dob).getMonth() + 1 : null;
+            const dowMonth = doctor.anniversaryDate ? new Date(doctor.anniversaryDate).getMonth() + 1 : null;
+            const hasDob = dobMonth === monthNum;
+            const hasDow = dowMonth === monthNum;
+            if (!hasDob && !hasDow) continue;
+
+            const emp = doctor.mappedEmployeeCode ? employeeByCode.get(doctor.mappedEmployeeCode) : undefined;
+            const managerCode = emp?.reportingManager;
+            const managerName = managerCode ? employeeByCode.get(managerCode)?.name ?? managerCode : "—";
+
+            sno += 1;
+            const row: DobRow = {
+              sno,
+              fieldForceName: doctor.mappedEmployeeName ?? "—",
+              designation: emp?.designation ?? "—",
+              hq: emp?.territory ?? "—",
+              lineManager1: managerName,
+              lineManager2: "—",
+              doctorName: doctor.name,
+              address: doctor.address1 ?? "—",
+              territory: doctor.territory,
+              dob: hasDob ? doctor.dob ?? undefined : undefined,
+              dow: hasDow ? doctor.anniversaryDate ?? undefined : undefined,
+              phone: doctor.phone ?? ""
+            };
+
+            if (hasDob) dobRows.push(row);
+            if (hasDow) dowRows.push(row);
+            if (hasDob && hasDow) bothRows.push(row);
+          }
+
+          setDobData(dobRows);
+          setDowData(dowRows);
+          setBothData(bothRows);
+        });
+      })
+      .catch(() => { setDobData([]); setDowData([]); setBothData([]); });
+  }, [selectedMonth]);
+
+  const TABS: { key: TabKey; label: string; icon: string; count: number }[] = [
+    { key:"dob",  label:"Date of Birth",            icon:"🎂", count: dobData.length },
+    { key:"dow",  label:"Date of Wedding",           icon:"💍", count: dowData.length },
+    { key:"both", label:"DOB + DOW (Same Month)",    icon:"🎉", count: bothData.length },
+  ];
+
+  const activeData = activeTab === "dob" ? dobData : activeTab === "dow" ? dowData : bothData;
 
   return (
     <section className="subdivision-console">
@@ -185,9 +230,9 @@ export function DoctorCelebrations() {
 
       {/* Stats */}
       <div className="subdivision-stats" style={{ marginBottom:20 }}>
-        <article><span>DOB This Month</span><strong style={{ color:"var(--brand)" }}>{dobData.filter(r => (r.dob ?? "").includes(selectedMonth)).length}</strong></article>
-        <article><span>DOW This Month</span><strong style={{ color:"var(--blue)" }}>{dowData.filter(r => (r.dow ?? "").includes(selectedMonth)).length}</strong></article>
-        <article><span>Both Events</span><strong style={{ color:"var(--amber)" }}>{bothData.filter(r => (r.dob ?? r.dow ?? "").includes(selectedMonth)).length}</strong></article>
+        <article><span>DOB This Month</span><strong style={{ color:"var(--brand)" }}>{dobData.length}</strong></article>
+        <article><span>DOW This Month</span><strong style={{ color:"var(--blue)" }}>{dowData.length}</strong></article>
+        <article><span>Both Events</span><strong style={{ color:"var(--amber)" }}>{bothData.length}</strong></article>
         <article><span>Total Records</span><strong>{dobData.length + dowData.length}</strong></article>
       </div>
 
@@ -214,10 +259,7 @@ export function DoctorCelebrations() {
           >
             {tab.icon} {tab.label}
             <span style={{ background: activeTab === tab.key ? "var(--brand)" : "var(--panel-strong)", color: activeTab === tab.key ? "#fff" : "var(--muted)", borderRadius:99, padding:"1px 7px", fontSize:11, fontWeight:700 }}>
-              {activeTab === tab.key
-                ? activeData.length
-                : (tab.key === "dob" ? dobData : tab.key === "dow" ? dowData : bothData).filter(r => (r.dob ?? r.dow ?? "").includes(selectedMonth)).length
-              }
+              {tab.count}
             </span>
           </button>
         ))}

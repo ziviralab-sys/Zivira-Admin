@@ -2,14 +2,22 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 export function ManagerSfcUpdation() {
   const [inputText, setInputText] = useState("");
   const [selectedDropdownVal, setSelectedDropdownVal] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dummyOptions, setDummyOptions] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const dummyOptions: string[] = [];
+  useEffect(() => {
+    // SFC records are keyed per HQ, so the dropdown lists distinct HQ values from the
+    // imported SFC sheet data.
+    apiClient.sfc()
+      .then(res => setDummyOptions([...new Set(res.data.map(s => s.hq).filter((v): v is string => !!v))].sort()))
+      .catch(() => setDummyOptions([]));
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
