@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { apiClient, type Expense, type Sfc } from "@/lib/api-client";
 
 export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTab?: string; embed?: boolean }) {
   // Tabs state for the embedded view (tables mode)
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [sfcRows, setSfcRows] = useState<Sfc[]>([]);
+  const [expenseRows, setExpenseRows] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    if (!embed) return;
+    apiClient.sfc().then(res => setSfcRows(res.data)).catch(() => setSfcRows([]));
+    apiClient.expenses().then(res => setExpenseRows(res.data)).catch(() => setExpenseRows([]));
+  }, [embed]);
 
   // Left Column States (for policy form mode)
   const [remarksAvailable, setRemarksAvailable] = useState("");
@@ -74,7 +83,15 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Empty body - frontend only */}
+                  {sfcRows.map(row => (
+                    <tr key={row.id}>
+                      <td>{row.employeeName ?? "—"}</td>
+                      <td>{row.patchName ?? "—"}</td>
+                      <td>{row.hq ?? "—"}</td>
+                      <td>{row.oneWayKms ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {sfcRows.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>No SFC records found</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -98,7 +115,15 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Empty body - frontend only */}
+                  {expenseRows.map(row => (
+                    <tr key={row.id}>
+                      <td>—</td>
+                      <td>{row.station ?? "—"}</td>
+                      <td>{row.metroType ?? "—"}</td>
+                      <td>{row.amountNC ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {expenseRows.length === 0 && <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>No expense records found</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -121,7 +146,9 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Empty body - frontend only */}
+                  {/* No source for attendance-status-keyed allowance types anywhere in the
+                      imported data (Attendance/Expense collections don't carry this
+                      breakdown) - left empty rather than fabricated. */}
                 </tbody>
               </table>
             </div>
@@ -147,7 +174,18 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Empty body - frontend only */}
+                  {expenseRows.map(row => (
+                    <tr key={row.id}>
+                      <td>{row.role}</td>
+                      <td>{row.listOfExpenseTypes ?? "—"}</td>
+                      <td>{row.dailyWork ?? "—"}</td>
+                      <td>{row.station ?? "—"}</td>
+                      <td>{row.metroType ?? "—"}</td>
+                      <td>{row.amountNC ?? "—"}</td>
+                      <td>{row.frequency ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {expenseRows.length === 0 && <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>No expense records found</td></tr>}
                 </tbody>
               </table>
             </div>

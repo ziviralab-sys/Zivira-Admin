@@ -7,14 +7,8 @@ import { apiClient, type ProductCatalogItem } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
 
 type SubdivisionRow = { id: string; division: string; subdivisionName: string; productwiseCount: number; fieldforcewiseCount: number; status: "ACTIVE" | "INACTIVE"; };
-type ProductRow = { sno: number; productName: string; description: string; saleUnit: string; category: string; group: string; };
-type FieldForceRow = { sno: number; name: string; designation: string; hq: string; reportingTo: string; };
 
 const emptyFormRow: SubdivisionRow = { id: "", division: "", subdivisionName: "", productwiseCount: 0, fieldforcewiseCount: 0, status: "ACTIVE" };
-
-const productwiseData: Record<string, ProductRow[]> = {};
-
-const fieldforcewiseData: Record<string, FieldForceRow[]> = {};
 
 const designationColors: Record<string, string> = {
   "ZONAL BUSINESS MANAGER": "#7c3aed",
@@ -51,10 +45,19 @@ function CategoryBadge({ category }: { category: string }) {
 }
 
 function FieldForceView({ subdivisionName, onBack }: { subdivisionName: string; onBack: () => void }) {
-  const rows = fieldforcewiseData[subdivisionName] ?? [];
+  const [rows, setRows] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    apiClient.employeesByDivision(subdivisionName).then(res => setRows(res.data)).catch(() => setRows([]));
+  }, [subdivisionName]);
+
   const designations = [...new Set(rows.map(r => r.designation))];
-  const filtered = rows.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.hq.toLowerCase().includes(search.toLowerCase()) || r.designation.toLowerCase().includes(search.toLowerCase()));
+  const filtered = rows.filter(r =>
+    r.name.toLowerCase().includes(search.toLowerCase()) ||
+    (r.territory ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    r.designation.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <section className="subdivision-console">
@@ -85,13 +88,13 @@ function FieldForceView({ subdivisionName, onBack }: { subdivisionName: string; 
             <tr><th>S.No</th><th>FieldForce Name</th><th>Designation</th><th>HQ</th><th>Reporting To</th></tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
-              <tr key={r.sno}>
-                <td style={{ color:"var(--muted)", fontWeight:500 }}>{r.sno}</td>
+            {filtered.map((r, index) => (
+              <tr key={r.id}>
+                <td style={{ color:"var(--muted)", fontWeight:500 }}>{index + 1}</td>
                 <td><strong style={{ color:"var(--ink)" }}>{r.name}</strong></td>
                 <td><DesignationBadge designation={r.designation} /></td>
-                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{r.hq}</span></td>
-                <td style={{ fontSize:"13px", color:"var(--muted)" }}>{r.reportingTo}</td>
+                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{r.territory ?? "—"}</span></td>
+                <td style={{ fontSize:"13px", color:"var(--muted)" }}>{r.reportingManager ?? "—"}</td>
               </tr>
             ))}
             {filtered.length === 0 && <tr><td colSpan={5} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No results found</td></tr>}
@@ -103,8 +106,15 @@ function FieldForceView({ subdivisionName, onBack }: { subdivisionName: string; 
 }
 
 function ProductwiseView({ subdivisionName, onBack }: { subdivisionName: string; onBack: () => void }) {
-  const products = productwiseData[subdivisionName] ?? [];
-  const categories = [...new Set(products.map(p => p.category))];
+  const [products, setProducts] = useState<ProductCatalogItem[]>([]);
+
+  useEffect(() => {
+    apiClient.productCatalogByDivision(subdivisionName).then(res => setProducts(res.data)).catch(() => setProducts([]));
+  }, [subdivisionName]);
+
+  // Category = the product's therapy. Group has no source anywhere in the Excel workbook
+  // (confirmed by an exhaustive cell-level scan of all 21 sheets) so it stays "—".
+  const categories = [...new Set(products.map(p => p.therapy).filter((t): t is string => !!t))];
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -127,16 +137,17 @@ function ProductwiseView({ subdivisionName, onBack }: { subdivisionName: string;
         <table className="subdivision-table">
           <thead><tr><th>S.No</th><th>Product Name</th><th>Description</th><th>Sale Unit</th><th>Category</th><th>Group</th></tr></thead>
           <tbody>
-            {products.map(p => (
-              <tr key={p.sno}>
-                <td style={{ color:"var(--muted)", fontWeight:500 }}>{p.sno}</td>
+            {products.map((p, index) => (
+              <tr key={p.id}>
+                <td style={{ color:"var(--muted)", fontWeight:500 }}>{index + 1}</td>
                 <td><strong style={{ color:"var(--ink)" }}>{p.productName}</strong></td>
-                <td style={{ color:"var(--muted)", fontSize:"13px" }}>{p.description}</td>
-                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{p.saleUnit}</span></td>
-                <td><CategoryBadge category={p.category} /></td>
-                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"#eff6ff", fontSize:"12px", fontWeight:700, color:"#2563eb" }}>{p.group}</span></td>
+                <td style={{ color:"var(--muted)", fontSize:"13px" }}>{p.molecule ?? "—"}</td>
+                <td><span style={{ display:"inline-block", padding:"2px 8px", borderRadius:"6px", background:"var(--line)", fontSize:"12px", fontWeight:600, color:"var(--ink)" }}>{p.saleUnit ?? "—"}</span></td>
+                <td>{p.therapy ? <CategoryBadge category={p.therapy} /> : "—"}</td>
+                <td>—</td>
               </tr>
             ))}
+            {products.length === 0 && <tr><td colSpan={6} style={{ textAlign:"center", color:"var(--muted)", padding:"32px" }}>No products found</td></tr>}
           </tbody>
         </table>
       </div>
