@@ -119,16 +119,16 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
           node("Stockist Master", "stockist-master", "division"),
           node("Stockist Mapping", "stockist-mapping", "division"),
           node("Chemist Master", "qualification", "division"),
-          node("Chemist Mapping", "chemist-mapping", "division")
+          node("Chemist Mapping", "chemist-mapping", "division"),
+          node("Listed Doctor", "listed-doctor", "division"),
+          node("Unlisted Doctor", "unlisted-doctor", "division")
         ]),
         node("Input", "input", "division"),
         node("Territory Bulk Activation/Deactivation", "field-force-entries", "division", [
           node("Patch Name", "territory", "division"),
           node("Territory - Listed Doctor", "territory-listed-doctor", "division"),
           node("Territory Bulk Deactivation", "territory-bulk-deactivation", "division"),
-          node("Listed Doctor", "listed-doctor", "division"),
           node("Hospital", "hospital", "division"),
-          node("Unlisted Doctor", "unlisted-doctor", "division"),
           node("Regional Zone Master", "view-productwise", "division"),
           node("Territory / Headquarters Master", "view-field-forcewise", "division")
         ]),

@@ -31,11 +31,11 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
     return <TerritoryBulkDeactivation />;
   }
 
-  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/field-force-entries/listed-doctor") {
+  if (pathStr.endsWith("listed-doctor")) {
     return <ListedDoctorMaster />;
   }
 
-  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/field-force-entries/unlisted-doctor") {
+  if (pathStr.endsWith("unlisted-doctor")) {
     return <UnlistedDoctorMaster />;
   }
 
