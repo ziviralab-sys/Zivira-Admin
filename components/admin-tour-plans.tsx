@@ -4,7 +4,6 @@ import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { downloadCsv } from "@/lib/download-csv";
-
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   SUBMITTED: { bg: "#fef9c3", color: "#a16207" },
   APPROVED:  { bg: "#d1fae5", color: "#065f46" },
@@ -12,12 +11,10 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   VOIDED:    { bg: "#f3f4f6", color: "#6b7280" },
   DRAFT:     { bg: "#e0e7ff", color: "#3730a3" }
 };
-
 export function AdminTourPlans() {
   const [tps, setTps] = useState<TourPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   async function load() {
     setLoading(true); setError("");
     try { setTps((await apiClient.adminTourPlans()).data); }
@@ -25,7 +22,6 @@ export function AdminTourPlans() {
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
-
   function exportCsv() {
     downloadCsv("tour-plans.csv", tps.map(tp => ({
       TpId: tp.tpId, MR: tp.employeeName ?? tp.employeeCode, Month: tp.month, Status: tp.status,
@@ -33,7 +29,6 @@ export function AdminTourPlans() {
       VoidReason: tp.voidReason ?? "", ReassignedTo: tp.reassignedToTpId ?? "", ParentTpId: tp.parentTpId ?? ""
     })));
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -48,7 +43,6 @@ export function AdminTourPlans() {
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
-
       <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
         <table className="subdivision-table">
           <thead>

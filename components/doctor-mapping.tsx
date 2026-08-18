@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 
 type MappingRow = {
@@ -146,7 +146,7 @@ export function DoctorMapping() {
           <p>Map doctors to divisions, headquarters, patches, and field force supervisors.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Mapping</button>
         </div>
       </div>
@@ -299,7 +299,7 @@ export function DoctorMapping() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

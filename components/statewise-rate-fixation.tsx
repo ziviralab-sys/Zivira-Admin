@@ -1,9 +1,7 @@
 "use client";
-
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown } from "lucide-react";
+import { Pencil, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
-
 type RateRow = {
   id: string;
   productName: string;
@@ -18,9 +16,7 @@ type RateRow = {
   effectiveDate: string;
   status: "Active" | "Inactive";
 };
-
 const initialRates: RateRow[] = [];
-
 export function StatewiseRateFixation() {
   const [rates, setRates] = useState<RateRow[]>(initialRates);
   const [productList, setProductList] = useState<string[]>([]);
@@ -45,7 +41,6 @@ export function StatewiseRateFixation() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [statusFilterMenuOpen, setStatusFilterMenuOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<RateRow | null>(null);
-
   useEffect(() => {
     // Fetch products to populate the product dropdown in the form
     apiClient.productCatalog()
@@ -57,7 +52,6 @@ export function StatewiseRateFixation() {
         setProductList(["Zivifresh 0.05% Cream", "Zivifresh Gel"]);
       });
   }, []);
-
   const filtered = rates.filter(
     (r) =>
       (r.productName.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,7 +59,6 @@ export function StatewiseRateFixation() {
       (currencyFilter === "All" || (r.currency || "INR") === currencyFilter) &&
       (statusFilter === "All" || (r.status || "Active") === statusFilter)
   );
-
   function handleAdd() {
     setFormRow({
       id: "",
@@ -83,16 +76,13 @@ export function StatewiseRateFixation() {
     });
     setView("add");
   }
-
   function handleEdit(row: RateRow) {
     setFormRow({ ...row });
     setEditTarget(row);
     setView("edit");
   }
-
   function handleSave() {
     if (!formRow.productName || !formRow.batchNo) return;
-
     if (view === "add") {
       const newRate: RateRow = {
         ...formRow,
@@ -104,11 +94,9 @@ export function StatewiseRateFixation() {
     }
     setView("list");
   }
-
   function handleDeactivate(id: string) {
     setRates(rates.filter(r => r.id !== id));
   }
-
   if (view === "add" || view === "edit") {
     return (
       <section className="subdivision-console">
@@ -228,13 +216,12 @@ export function StatewiseRateFixation() {
             </select>
           </label>
           <button className="button" style={{ marginTop: "12px" }} onClick={handleSave} type="button" disabled={!formRow.productName || !formRow.batchNo}>
-            <Check size={16} /> Add Rate
+            Add Rate
           </button>
         </div>
       </section>
     );
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -248,11 +235,10 @@ export function StatewiseRateFixation() {
             <SlidersHorizontal size={16} /> Filters
           </button>
           <button className="button" onClick={handleAdd} type="button">
-            <Plus size={16} /> Add Batch Rate
+             Add Batch Rate
           </button>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by product or batch..."
@@ -269,14 +255,12 @@ export function StatewiseRateFixation() {
           }}
         />
       </div>
-
       <div className="subdivision-stats" style={{ marginBottom: "20px" }}>
         <article>
           <span>Total Rates</span>
           <strong>{rates.length}</strong>
         </article>
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX: "auto", minHeight: "280px" }}>
         <table className="subdivision-table">
           <thead>
@@ -501,7 +485,7 @@ export function StatewiseRateFixation() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} title="Delete" type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

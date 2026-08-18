@@ -1,9 +1,7 @@
 "use client";
-
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
-
 type UnlistedDoctorRow = {
   id: string;
   tempCode: string;
@@ -13,23 +11,18 @@ type UnlistedDoctorRow = {
   mr: string;
   status: "Pending" | "Approved" | "Rejected";
 };
-
 const initialDoctors: UnlistedDoctorRow[] = [];
-
 export function UnlistedDoctorMaster() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add" | "edit">("list");
   const [activeFormTab, setActiveFormTab] = useState<number>(1);
   const [search, setSearch] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     fetchData();
   }, []);
-
   async function fetchData() {
     try {
       setLoading(true);
@@ -41,7 +34,6 @@ export function UnlistedDoctorMaster() {
       setLoading(false);
     }
   }
-
   // Form inputs for 7 tabs
   const [form, setForm] = useState({
     tempCode: "",
@@ -50,35 +42,28 @@ export function UnlistedDoctorMaster() {
     city: "Chennai",
     mr: "Rahul Sharma",
     status: "Pending" as "Pending" | "Approved" | "Rejected",
-
     // Address
     clinicName: "",
     address: "",
     area: "",
     state: "Tamil Nadu",
     pinCode: "",
-
     // Territory Info
     patch: "T. Nagar",
     hq: "Chennai Central HQ",
-
     // Contact
     mobile: "",
     email: "",
-
     // Visit Info
     visitFrequency: "Monthly",
     potential: "Medium",
-
     // Approval details
     remarks: "",
     approvedBy: "Priya Nair",
-
     // Additional Info
     dob: "",
     anniversaryDate: ""
   });
-
   function handleAdd() {
     const nextCode = `TMP-DOC${String(list.length + 1).padStart(2, "0")}`;
     setForm({
@@ -107,7 +92,6 @@ export function UnlistedDoctorMaster() {
     setActiveFormTab(1);
     setView("add");
   }
-
   function handleEdit(row: any) {
     setSelectedDoc(row);
     setForm({
@@ -136,7 +120,6 @@ export function UnlistedDoctorMaster() {
     setActiveFormTab(1);
     setView("edit");
   }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -194,7 +177,6 @@ export function UnlistedDoctorMaster() {
       alert(err.message || "Failed to save unlisted doctor");
     }
   }
-
   async function handleDelete(id: string) {
     try {
       await apiClient.updateUnlistedDoctor(id, { status: "Rejected" });
@@ -203,24 +185,19 @@ export function UnlistedDoctorMaster() {
       alert(err.message || "Failed to reject");
     }
   }
-
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
-
   const filtered = list.filter(x => {
     const s = search.toLowerCase();
     const statusMatch = statusFilter === "All" ||
       (statusFilter === "Active" && x.status === "Approved") ||
       (statusFilter === "Inactive" && x.status === "Rejected") ||
       (statusFilter === "Pending" && x.status === "Pending");
-      
     const nameStr = (x.name || "").toLowerCase();
     const codeStr = (x.tempCode || "").toLowerCase();
     const mrStr = (x.mr || "").toLowerCase();
-
     return statusMatch && (nameStr.includes(s) || codeStr.includes(s) || mrStr.includes(s));
   });
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -230,11 +207,10 @@ export function UnlistedDoctorMaster() {
           <p>Verify temporary doctor profiles registered during field visits before official listing.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Add Unlisted Doctor</button>
+          
+          <button className="button" onClick={handleAdd} type="button"> Add Unlisted Doctor</button>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by name, code or MR..."
@@ -243,9 +219,14 @@ export function UnlistedDoctorMaster() {
           style={{ width: "100%", maxWidth: "360px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
         />
       </div>
-
-      {view !== "list" ? (
-        <div style={{ marginTop: "16px" }}>
+      {view !== "list" && (
+        <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "40px 20px", overflowY: "auto" }}>
+          <div style={{ background: "var(--panel)", borderRadius: "12px", width: "100%", maxWidth: "500px", padding: "24px", boxShadow: "0 10px 40px rgba(0,0,0,0.15)", position: "relative" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2>{view === "add" ? "Add Unlisted Doctor" : "Edit Unlisted Doctor"}</h2>
+              <button className="button button-secondary" onClick={() => setView("list")} type="button">Close</button>
+            </div>
+            <div style={{ marginTop: "16px" }}>
           {/* Tabs header row */}
           <div style={{ display: "flex", gap: "6px", overflowX: "auto", padding: "6px 0", marginBottom: "16px", borderBottom: "1px solid var(--border)" }}>
             {[
@@ -268,7 +249,6 @@ export function UnlistedDoctorMaster() {
               </button>
             ))}
           </div>
-
           <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
             {activeFormTab === 1 && (
               <>
@@ -302,7 +282,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 2 && (
               <>
                 <div className="field">
@@ -327,7 +306,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 3 && (
               <>
                 <div className="field">
@@ -340,7 +318,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 4 && (
               <>
                 <div className="field">
@@ -353,7 +330,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 5 && (
               <>
                 <div className="field">
@@ -374,7 +350,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 6 && (
               <>
                 <div className="field">
@@ -387,7 +362,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 7 && (
               <>
                 <div className="field">
@@ -400,7 +374,6 @@ export function UnlistedDoctorMaster() {
                 </div>
               </>
             )}
-
             <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
               {activeFormTab < 7 ? (
                 <button className="button button-secondary" type="button" onClick={() => setActiveFormTab(prev => prev + 1)}>
@@ -408,14 +381,16 @@ export function UnlistedDoctorMaster() {
                 </button>
               ) : (
                 <button className="button" type="submit">
-                  <Check size={16} /> Add Doctor Request
+                  Add Doctor Request
                 </button>
               )}
             </div>
           </form>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
+      )}
+      <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
           {loading ? (
             <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Loading doctors...</div>
           ) : error ? (
@@ -565,7 +540,7 @@ export function UnlistedDoctorMaster() {
                     </td>
                     <td>
                       <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Reject" type="button">
-                        <Trash2 size={15} />
+                        <Ban />
                       </button>
                     </td>
                   </tr>
@@ -581,7 +556,6 @@ export function UnlistedDoctorMaster() {
             </table>
           )}
         </div>
-      )}
     </section>
   );
 }

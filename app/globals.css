@@ -223,7 +223,7 @@ textarea {
   top: 0;
   z-index: 10;
   display: flex;
-  height: 72px;
+  min-height: 72px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -442,6 +442,14 @@ textarea {
   min-height: 180px;
   display: grid;
   align-content: center;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body:has(.modal-overlay) {
+  overflow: hidden;
 }
 
 .admin-dashboard {
@@ -1388,8 +1396,8 @@ tr:last-child td {
 
 .field {
   display: grid;
-  gap: 7px;
-  margin: 16px 0;
+  gap: 4px;
+  margin: 0 0 6px 0;
 }
 
 .field label {
@@ -1401,7 +1409,7 @@ tr:last-child td {
 .field input,
 .field select {
   width: 100%;
-  min-height: 42px;
+  min-height: 38px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);

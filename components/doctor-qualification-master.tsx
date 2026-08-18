@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, Ban } from "lucide-react";
 import { useState } from "react";
 
 type DealerMappingRow = {
@@ -112,7 +112,7 @@ export function DoctorQualificationMaster() {
           <p>Map doctors to local stockists and retail chemists/dealers.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Mapping</button>
         </div>
       </div>
@@ -164,7 +164,7 @@ export function DoctorQualificationMaster() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

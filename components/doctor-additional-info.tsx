@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Ban } from "lucide-react";
 import { useState } from "react";
 import { formatDate } from "@/lib/format-date";
 
@@ -111,7 +111,7 @@ export function DoctorAdditionalInfo() {
           <p>Create and manage doctor personal detail milestones.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Information</button>
         </div>
       </div>
@@ -163,7 +163,7 @@ export function DoctorAdditionalInfo() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

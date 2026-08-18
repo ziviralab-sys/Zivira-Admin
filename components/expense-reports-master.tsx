@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 import { BackButton } from "@/components/back-button";
 
@@ -105,7 +105,7 @@ export function ExpenseReportsMaster() {
         </div>
         <div className="subdivision-actions">
           <BackButton />
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Report</button>
         </div>
       </div>
@@ -151,7 +151,7 @@ export function ExpenseReportsMaster() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

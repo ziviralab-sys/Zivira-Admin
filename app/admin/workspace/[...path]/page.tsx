@@ -89,19 +89,13 @@ export default async function AdminWorkspacePage({ params }: { params: Promise<{
     notFound();
   }
 
-  const isHolidayFixationSubPage = pathStr.includes("statewise-holiday-fixation/state-master") || 
-                                   pathStr.includes("statewise-holiday-fixation/holiday-calendar");
-
   return (
     <>
-      {!isHolidayFixationSubPage && (
-        <PageHeader
-          eyebrow="Admin Module"
-          title={node.title}
-          description="Working modern page for this exact architecture tab. Data CRUD can be wired to its MongoDB collection."
-          action={<BackButton fallback="/admin/home" />}
-        />
-      )}
+      <PageHeader
+        title={node.title}
+        description="Working modern page for this exact architecture tab. Data CRUD can be wired to its MongoDB collection."
+        action={<BackButton fallback="/admin/home" />}
+      />
       <AdminDrilldown node={node} path={path} />
     </>
   );

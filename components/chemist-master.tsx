@@ -1,9 +1,9 @@
 "use client";
-
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
 import { apiClient } from "@/lib/api-client";
-
 type ChemistRow = {
   id: string;
   code: string;
@@ -13,23 +13,19 @@ type ChemistRow = {
   mr: string;
   status: "Active" | "Inactive";
 };
-
 const initialChemists: ChemistRow[] = [];
-
 export function ChemistMaster() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add" | "edit">("list");
   const [activeFormTab, setActiveFormTab] = useState<number>(1);
   const [search, setSearch] = useState("");
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [selectedChemist, setSelectedChemist] = useState<any | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     fetchData();
   }, []);
-
   async function fetchData() {
     try {
       setLoading(true);
@@ -41,7 +37,6 @@ export function ChemistMaster() {
       setLoading(false);
     }
   }
-
   // Form State
   const [form, setForm] = useState({
     code: "",
@@ -50,34 +45,27 @@ export function ChemistMaster() {
     city: "Chennai",
     mr: "Rahul Sharma",
     status: "Active" as "Active" | "Inactive",
-
     // Address
     address: "",
     area: "",
     state: "Tamil Nadu",
     pinCode: "",
-
     // Territory Mapping
     patch: "T. Nagar",
     hq: "Chennai Central HQ",
-
     // Distributor Mapping
     stockist: "Zivira Stockist Chennai",
-
     // Contact Details
     contactPerson: "",
     mobile: "",
     email: "",
-
     // Business Info
     gstin: "",
     dlNo: "",
     panNo: "",
-
     // Additional Info
     remarks: ""
   });
-
   function handleAdd() {
     const nextCode = `CHM${String(list.length + 1).padStart(3, "0")}`;
     setForm({
@@ -105,7 +93,6 @@ export function ChemistMaster() {
     setActiveFormTab(1);
     setView("add");
   }
-
   function handleEdit(row: any) {
     setSelectedChemist(row);
     setForm({
@@ -133,7 +120,6 @@ export function ChemistMaster() {
     setActiveFormTab(1);
     setView("edit");
   }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (view === "add") {
@@ -158,42 +144,49 @@ export function ChemistMaster() {
     }
     setView("list");
   }
-
   function handleDelete(id: string) {
     setList(list.map(x => x.id === id ? { ...x, status: "Inactive" as const } : x));
   }
-
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
-
   const filtered = list.filter(x => {
     const s = search.toLowerCase();
     const isActive = x.status === "ACTIVE" || x.status === "Active";
     const statusMatch = statusFilter === "All" ||
       (statusFilter === "Active" && isActive) ||
       (statusFilter === "Inactive" && !isActive);
-      
     const nameStr = (x.dealerName || "").toLowerCase();
     const mrStr = (x.employeeName || x.employeeCode || "").toLowerCase();
     const codeStr = (x.sourceSNo ? String(x.sourceSNo) : "").toLowerCase();
-
-    return statusMatch && (nameStr.includes(s) || mrStr.includes(s) || codeStr.includes(s));
+    const searchMatch = nameStr.includes(s) || mrStr.includes(s) || codeStr.includes(s);
+    let colMatch = true;
+    for (const [key, val] of Object.entries(columnFilters)) {
+      if (val !== "All" && String((x as any)[key] || "").toUpperCase() !== val.toUpperCase()) colMatch = false;
+    }
+    return statusMatch && searchMatch && colMatch;
   });
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
           <p className="subdivision-eyebrow">Field Force Entries</p>
-          <h2>Chemist (Dealer) Details</h2>
+          <h2>Chemist - Dealer - Details</h2>
           <p>Maintain pharmacy networks and retail distributor mappings.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Add Chemist</button>
+          
+          <button className="button" onClick={handleAdd} type="button"> Add Chemist</button>
         </div>
       </div>
-
+      <div className="subdivision-stats" style={{ marginBottom: "16px", display: "flex", gap: "16px" }}>
+        <article style={{ background: "var(--panel)", padding: "16px", borderRadius: "8px", border: "1px solid var(--border)", minWidth: "160px" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase" }}>Total Records</span>
+          <strong style={{ display: "block", fontSize: "28px", marginTop: "4px" }}>{filtered.length}</strong>
+        </article>
+        <Link className="card module-card" href="/admin/workspace/division-dashboard/division-navigation-tabs/division-master/doctor/category" style={{ borderLeft: "4px solid var(--brand-strong)", width: "300px", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 16px" }}>
+          <h3 className="section-title">Doctor</h3>
+        </Link>
+      </div>
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by name, code or MR..."
@@ -202,7 +195,6 @@ export function ChemistMaster() {
           style={{ width: "100%", maxWidth: "360px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
         />
       </div>
-
       {view !== "list" ? (
         <div style={{ marginTop: "16px" }}>
           {/* Tabs row */}
@@ -227,7 +219,6 @@ export function ChemistMaster() {
               </button>
             ))}
           </div>
-
           <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
             {activeFormTab === 1 && (
               <>
@@ -264,7 +255,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 2 && (
               <>
                 <div className="field">
@@ -285,7 +275,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 3 && (
               <>
                 <div className="field">
@@ -302,7 +291,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 4 && (
               <>
                 <div className="field">
@@ -311,7 +299,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 5 && (
               <>
                 <div className="field">
@@ -328,7 +315,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 6 && (
               <>
                 <div className="field">
@@ -345,7 +331,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 7 && (
               <>
                 <div className="field">
@@ -354,7 +339,6 @@ export function ChemistMaster() {
                 </div>
               </>
             )}
-
             <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
               {activeFormTab < 7 ? (
                 <button className="button button-secondary" type="button" onClick={() => setActiveFormTab(prev => prev + 1)}>
@@ -362,7 +346,7 @@ export function ChemistMaster() {
                 </button>
               ) : (
                 <button className="button" type="submit">
-                  <Check size={16} /> Add Chemist
+                  Add Chemist
                 </button>
               )}
             </div>
@@ -381,13 +365,39 @@ export function ChemistMaster() {
                   <th>S.No</th>
                   <th>Chemist Code</th>
                   <th>Chemist Name</th>
-                  <th>Type</th>
-                  <th>City</th>
+                  {[
+                    { key: "type", label: "Type" },
+                    { key: "city", label: "City" },
+                  ].map(f => {
+                    const uniqueValues = Array.from(new Set(list.map(r => String((r as any)[f.key] || "")))).filter(Boolean).sort();
+                    const options = uniqueValues.map(v => ({ label: v, value: v }));
+                    return (
+                      <th key={f.key}>
+                        <div style={{ minWidth: "120px" }}>
+                          <ColumnFilterDropdown 
+                            title={f.label} 
+                            value={columnFilters[f.key] || "All"} 
+                            options={options} 
+                            onChange={(val) => setColumnFilters(prev => ({ ...prev, [f.key]: val }))} 
+                          />
+                        </div>
+                      </th>
+                    );
+                  })}
                   <th>Medical Representative</th>
                   <th>Pin Code</th>
                   <th>Contact</th>
-                  <th>Area</th>
-                  <th style={{ minWidth: "130px", position: "relative" }}>
+                  <th key="area">
+                    <div style={{ minWidth: "120px" }}>
+                      <ColumnFilterDropdown 
+                        title="Area" 
+                        value={columnFilters["area"] || "All"} 
+                        options={Array.from(new Set(list.map(r => String((r as any)["area"] || "")))).filter(Boolean).sort().map(v => ({ label: v, value: v }))} 
+                        onChange={(val) => setColumnFilters(prev => ({ ...prev, area: val }))} 
+                      />
+                    </div>
+                  </th>
+                  <th style={{ minWidth: "130px" }}>
                     <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                       <span>Status</span>
                       <button
@@ -474,7 +484,7 @@ export function ChemistMaster() {
                     )}
                   </th>
                   <th>Edit</th>
-                  <th>Deactivate</th>
+                  <th>Inactive</th>
                 </tr>
               </thead>
               <tbody>
@@ -509,7 +519,7 @@ export function ChemistMaster() {
                     </td>
                     <td>
                       <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                        <Trash2 size={15} />
+                        <Ban />
                       </button>
                     </td>
                   </tr>

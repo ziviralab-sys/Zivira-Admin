@@ -1,9 +1,7 @@
 import type { ZiviraTreeNode } from "@zivira/types";
 import Link from "next/link";
-
 function Card({ node, parentPath }: { node: ZiviraTreeNode; parentPath: string[] }) {
   const path = [...parentPath, node.slug];
-
   return (
     <Link className="card module-card" href={`/admin/workspace/${path.join("/")}`}>
       <div className="card-head">
@@ -15,10 +13,8 @@ function Card({ node, parentPath }: { node: ZiviraTreeNode; parentPath: string[]
     </Link>
   );
 }
-
 export function AdminTabGrid({ node, path }: { node: ZiviraTreeNode; path: string[] }) {
   const children = node.children?.length ? node.children : [node];
-
   return (
     <div className="grid grid-3">
       {children.map((child) => (

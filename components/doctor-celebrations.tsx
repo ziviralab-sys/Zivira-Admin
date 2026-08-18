@@ -1,9 +1,7 @@
 "use client";
-
 import { Cake, Download, Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
-
 type DobRow = {
   sno: number;
   fieldForceName: string;
@@ -18,9 +16,7 @@ type DobRow = {
   dow?: string;
   phone: string;
 };
-
 type TabKey = "dob" | "dow" | "both";
-
 function CelebTable({ rows, type }: { rows: DobRow[]; type: TabKey }) {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
@@ -34,7 +30,6 @@ function CelebTable({ rows, type }: { rows: DobRow[]; type: TabKey }) {
       (r.dow ?? "").toLowerCase().includes(q)
     );
   }, [rows, search]);
-
   return (
     <>
       <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
@@ -44,7 +39,6 @@ function CelebTable({ rows, type }: { rows: DobRow[]; type: TabKey }) {
         </div>
         <span style={{ fontSize:12, color:"var(--muted)", marginLeft:"auto" }}>{filtered.length} record{filtered.length !== 1 ? "s" : ""}</span>
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX:"auto" }}>
         <table className="subdivision-table" style={{ minWidth: type === "both" ? 1100 : 980 }}>
           <thead>
@@ -93,19 +87,15 @@ function CelebTable({ rows, type }: { rows: DobRow[]; type: TabKey }) {
     </>
   );
 }
-
 const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 export function DoctorCelebrations() {
   const [activeTab, setActiveTab] = useState<TabKey>("dob");
   const [selectedMonth, setSelectedMonth] = useState("May");
   const [dobData, setDobData] = useState<DobRow[]>([]);
   const [dowData, setDowData] = useState<DobRow[]>([]);
   const [bothData, setBothData] = useState<DobRow[]>([]);
-
   const [openMenu, setOpenMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -115,32 +105,26 @@ export function DoctorCelebrations() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   useEffect(() => {
     const monthNum = months.indexOf(selectedMonth) + 1;
     if (!monthNum) return;
-
     apiClient.employees()
       .then(empRes => {
         const employeeByCode = new Map(empRes.data.map(e => [e.employeeCode, e]));
-
         return apiClient.doctorCelebrations(monthNum).then(docRes => {
           const dobRows: DobRow[] = [];
           const dowRows: DobRow[] = [];
           const bothRows: DobRow[] = [];
           let sno = 0;
-
           for (const doctor of docRes.data) {
             const dobMonth = doctor.dob ? new Date(doctor.dob).getMonth() + 1 : null;
             const dowMonth = doctor.anniversaryDate ? new Date(doctor.anniversaryDate).getMonth() + 1 : null;
             const hasDob = dobMonth === monthNum;
             const hasDow = dowMonth === monthNum;
             if (!hasDob && !hasDow) continue;
-
             const emp = doctor.mappedEmployeeCode ? employeeByCode.get(doctor.mappedEmployeeCode) : undefined;
             const managerCode = emp?.reportingManager;
             const managerName = managerCode ? employeeByCode.get(managerCode)?.name ?? managerCode : "—";
-
             sno += 1;
             const row: DobRow = {
               sno,
@@ -156,12 +140,10 @@ export function DoctorCelebrations() {
               dow: hasDow ? doctor.anniversaryDate ?? undefined : undefined,
               phone: doctor.phone ?? ""
             };
-
             if (hasDob) dobRows.push(row);
             if (hasDow) dowRows.push(row);
             if (hasDob && hasDow) bothRows.push(row);
           }
-
           setDobData(dobRows);
           setDowData(dowRows);
           setBothData(bothRows);
@@ -169,15 +151,12 @@ export function DoctorCelebrations() {
       })
       .catch(() => { setDobData([]); setDowData([]); setBothData([]); });
   }, [selectedMonth]);
-
   const TABS: { key: TabKey; label: string; icon: string; count: number }[] = [
     { key:"dob",  label:"Date of Birth",            icon:"🎂", count: dobData.length },
     { key:"dow",  label:"Date of Wedding",           icon:"💍", count: dowData.length },
     { key:"both", label:"DOB + DOW (Same Month)",    icon:"🎉", count: bothData.length },
   ];
-
   const activeData = activeTab === "dob" ? dobData : activeTab === "dow" ? dowData : bothData;
-
   return (
     <section className="subdivision-console">
       {/* Header */}
@@ -227,7 +206,6 @@ export function DoctorCelebrations() {
           </button>
         </div>
       </div>
-
       {/* Stats */}
       <div className="subdivision-stats" style={{ marginBottom:20 }}>
         <article><span>DOB This Month</span><strong style={{ color:"var(--brand)" }}>{dobData.length}</strong></article>
@@ -235,7 +213,6 @@ export function DoctorCelebrations() {
         <article><span>Both Events</span><strong style={{ color:"var(--amber)" }}>{bothData.length}</strong></article>
         <article><span>Total Records</span><strong>{dobData.length + dowData.length}</strong></article>
       </div>
-
       {/* Tabs */}
       <div style={{ display:"flex", gap:6, marginBottom:20, borderBottom:"1px solid var(--line)", paddingBottom:0 }}>
         {TABS.map(tab => (
@@ -264,7 +241,6 @@ export function DoctorCelebrations() {
           </button>
         ))}
       </div>
-
       {/* Table */}
       <CelebTable rows={activeData} type={activeTab} />
     </section>

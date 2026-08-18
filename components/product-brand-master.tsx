@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RefreshCw, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RefreshCw, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient, type ProductBrand } from "@/lib/api-client";
 
@@ -227,7 +227,7 @@ export function ProductBrandMaster() {
           <p>Create and manage product brands used across the platform.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Brand</button>
         </div>
       </div>
@@ -335,7 +335,7 @@ export function ProductBrandMaster() {
                 )}
               </th>
               <th>Edit</th>
-              <th>Deactivate</th>
+              <th>Inactive</th>
             </tr>
           </thead>
           <tbody>
@@ -373,7 +373,7 @@ export function ProductBrandMaster() {
                     <button className="subdivision-icon-button" onClick={() => { setEditTarget(row); setView("edit"); }} title="Edit" type="button"><Pencil size={15} /></button>
                   </td>
                   <td>
-                    <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} title="Deactivate" type="button" disabled={row.status === "INACTIVE"}><Trash2 size={15} /></button>
+                    <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} title="Deactivate" type="button" disabled={row.status === "INACTIVE"}><Ban /></button>
                   </td>
                 </tr>
               );

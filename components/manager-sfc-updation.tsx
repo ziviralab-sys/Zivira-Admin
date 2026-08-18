@@ -1,16 +1,13 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-
 export function ManagerSfcUpdation() {
   const [inputText, setInputText] = useState("");
   const [selectedDropdownVal, setSelectedDropdownVal] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dummyOptions, setDummyOptions] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     // SFC records are keyed per HQ, so the dropdown lists distinct HQ values from the
     // imported SFC sheet data.
@@ -18,7 +15,6 @@ export function ManagerSfcUpdation() {
       .then(res => setDummyOptions([...new Set(res.data.map(s => s.hq).filter((v): v is string => !!v))].sort()))
       .catch(() => setDummyOptions([]));
   }, []);
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -28,7 +24,6 @@ export function ManagerSfcUpdation() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   return (
     <section className="subdivision-console">
       {/* Page Header */}
@@ -39,16 +34,13 @@ export function ManagerSfcUpdation() {
           <p>Configure SFC routes and parameters for managers.</p>
         </div>
       </div>
-
       {/* Main Settings Panel */}
       <div className="card" style={{ padding: "28px", background: "var(--panel)", borderRadius: "12px", border: "1px solid var(--border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-          
           {/* Label */}
           <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink)", whiteSpace: "nowrap" }}>
             SFC Updation
           </span>
-
           {/* Box 1: Empty text box */}
           <input
             type="text"
@@ -68,7 +60,6 @@ export function ManagerSfcUpdation() {
               boxSizing: "border-box"
             }}
           />
-
           {/* Box 2: Dropdown box */}
           <div className="command-select" style={{ position: "relative", width: "fit-content" }} ref={dropdownRef}>
             <button
@@ -89,7 +80,6 @@ export function ManagerSfcUpdation() {
               <span>{selectedDropdownVal || ""}</span>
               <ChevronDown size={15} style={{ color: "var(--muted)" }} />
             </button>
-
             {dropdownOpen && (
               <div className="command-select-menu" style={{ width: "260px", top: "calc(100% + 6px)", left: 0, right: "auto" }}>
                 {dummyOptions.map((opt) => (
@@ -109,7 +99,6 @@ export function ManagerSfcUpdation() {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </section>

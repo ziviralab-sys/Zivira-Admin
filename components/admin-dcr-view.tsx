@@ -2,7 +2,6 @@
 import { Clock, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient, type DcrRecord } from "@/lib/api-client";
-
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   SUBMITTED:        { bg:"#fef9c3", color:"#a16207" },
   MANAGER_APPROVED: { bg:"#dbeafe", color:"#1d4ed8" },
@@ -10,30 +9,25 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   REJECTED:         { bg:"#fee2e2", color:"#b91c1c" },
   DRAFT:            { bg:"#f3f4f6", color:"#6b7280" }
 };
-
 export function AdminDcrView() {
   const [dcrs, setDcrs]       = useState<DcrRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
-
   async function load() {
     setLoading(true); setError("");
     try { setDcrs((await apiClient.dcrs()).data); }
     catch (e) { setError(e instanceof Error ? e.message : "Load failed"); }
     finally { setLoading(false); }
   }
-
   async function approve(id: string) {
     try { await apiClient.approveDcr(id); await load(); }
     catch (e) { setError(e instanceof Error ? e.message : "Approval failed"); }
   }
-
   useEffect(() => {
     void load();
     const timer = window.setInterval(() => { void load(); }, 600000);
     return () => window.clearInterval(timer);
   }, []);
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">

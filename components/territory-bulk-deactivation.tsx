@@ -1,9 +1,9 @@
 "use client";
-
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
+import { RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
-
 type DeactivationRow = {
   id: string;
   division: string;
@@ -15,21 +15,16 @@ type DeactivationRow = {
   effectiveDate: string;
   status: "Active" | "Inactive";
 };
-
 const initialRows: DeactivationRow[] = [];
-
 export function TerritoryBulkDeactivation() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add">("list");
   const [search, setSearch] = useState("");
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     fetchData();
   }, []);
-
   async function fetchData() {
     try {
       setLoading(true);
@@ -51,7 +46,6 @@ export function TerritoryBulkDeactivation() {
       setLoading(false);
     }
   }
-
   const [form, setForm] = useState({
     division: "Zivira",
     hq: "Chennai Central HQ",
@@ -61,13 +55,11 @@ export function TerritoryBulkDeactivation() {
     effectiveDate: new Date().toISOString().split("T")[0],
     status: "Active" as "Active" | "Inactive"
   });
-
   const patchesList = [
     { name: "T. Nagar", hq: "Chennai Central HQ", total: 12, active: 10 },
     { name: "Mylapore", hq: "Chennai South HQ", total: 8, active: 8 },
     { name: "Adyar", hq: "Chennai South HQ", total: 5, active: 4 }
   ];
-
   function handlePatchChange(patchName: string) {
     const p = list.find(x => x.patch === patchName);
     if (p) {
@@ -80,7 +72,6 @@ export function TerritoryBulkDeactivation() {
       }));
     }
   }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -92,22 +83,40 @@ export function TerritoryBulkDeactivation() {
       alert(err.message || "Failed to bulk deactivate");
     }
   }
-
   function toggleCheckbox(id: string) {
     setList(list.map(x => x.id === id ? { ...x, selectedForDeactivation: !x.selectedForDeactivation } : x));
   }
-
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const filtered = list.filter(x => {
+    let isMatch = true;
 
-  const filtered = list.filter(x =>
-    (statusFilter === "All" ||
-      (statusFilter === "Active" && x.status === "Active") ||
-      (statusFilter === "Inactive" && x.status === "Inactive")) &&
-    (x.patch.toLowerCase().includes(search.toLowerCase()) ||
-      x.hq.toLowerCase().includes(search.toLowerCase()))
-  );
+    // Status Filter
+    const isActive = x.status === "Active" || x.status === "ACTIVE";
+    const statusMatch = statusFilter === "All" ||
+      (statusFilter === "Active" && isActive) ||
+      (statusFilter === "Inactive" && !isActive);
+      
+    if (!statusMatch) isMatch = false;
 
+    // Search Box
+    const s = search.toLowerCase();
+    const patchStr = (x.patch || "").toLowerCase();
+    const hqStr = (x.hq || "").toLowerCase();
+    if (s && !(patchStr.includes(s) || hqStr.includes(s))) {
+        isMatch = false;
+    }
+
+    // Column Filters
+    for (const [key, val] of Object.entries(columnFilters)) {
+      if (val !== "All") {
+        const rowVal = String((x as any)[key] || "").toUpperCase();
+        if (rowVal !== val.toUpperCase()) isMatch = false;
+      }
+    }
+
+    return isMatch;
+  });
   if (view !== "list") {
     return (
       <section className="subdivision-console">
@@ -121,7 +130,6 @@ export function TerritoryBulkDeactivation() {
             <RotateCcw size={16} /> Back
           </button>
         </div>
-
         <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
           <div className="field">
             <label>Select Division</label>
@@ -131,7 +139,6 @@ export function TerritoryBulkDeactivation() {
               <option value="Ara">Ara</option>
             </select>
           </div>
-
           <div className="field">
             <label>Select Patch</label>
             <select value={form.patch} onChange={e => handlePatchChange(e.target.value)}>
@@ -140,37 +147,31 @@ export function TerritoryBulkDeactivation() {
               ))}
             </select>
           </div>
-
           <div className="field">
             <label>Headquarters (HQ)</label>
             <input readOnly value={form.hq} style={{ opacity: 0.7 }} />
           </div>
-
           <div className="field">
             <label>Total Doctors</label>
             <input readOnly value={form.totalDoctors} style={{ opacity: 0.7 }} />
           </div>
-
           <div className="field">
             <label>Active Doctors</label>
             <input readOnly value={form.activeDoctors} style={{ opacity: 0.7 }} />
           </div>
-
           <div className="field">
             <label>Effective Date</label>
             <input type="date" value={form.effectiveDate} onChange={e => setForm({ ...form, effectiveDate: e.target.value })} />
           </div>
-
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
             <button className="button" type="submit">
-              <Check size={16} /> Bulk Deactivate Mappings
+              Bulk Deactivate Mappings
             </button>
           </div>
         </form>
       </section>
     );
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -180,11 +181,10 @@ export function TerritoryBulkDeactivation() {
           <p>Disable entire patch sales mapping networks simultaneously.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Bulk Deactivation</button>
+          
+          <button className="button" onClick={() => setView("add")} type="button"> Add Bulk Deactivation</button>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by patch or HQ..."
@@ -193,7 +193,6 @@ export function TerritoryBulkDeactivation() {
           style={{ width: "100%", maxWidth: "360px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
         />
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
         {loading ? (
           <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Loading mappings...</div>
@@ -204,98 +203,63 @@ export function TerritoryBulkDeactivation() {
             <thead>
               <tr>
                 <th>S.No</th>
-                <th>Division</th>
-                <th>HQ</th>
-                <th>Patch</th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Division" 
+                      value={columnFilters['division'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.division || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, division: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="HQ" 
+                      value={columnFilters['hq'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.hq || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, hq: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Patch" 
+                      value={columnFilters['patch'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.patch || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, patch: val }))} 
+                    />
+                  </div>
+                </th>
                 <th>Total Doctors</th>
                 <th>Active Doctor</th>
-                <th>Selected For Deactivation</th>
-                <th>Effective Date</th>
-                <th style={{ minWidth: "130px", position: "relative" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                    <span>Status</span>
-                    <button
-                      type="button"
-                      onClick={() => setStatusFilterOpen(!statusFilterOpen)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--muted)",
-                        cursor: "pointer",
-                        padding: "2px",
-                        display: "flex",
-                        alignItems: "center"
+                <th>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "center" }}>
+                    <span>Selected For Deactivation</span>
+                    <select 
+                      onChange={(e) => {
+                        if (e.target.value === "Select All") {
+                          setList(list.map(x => ({ ...x, selectedForDeactivation: true })));
+                        } else if (e.target.value === "Deselect All") {
+                          setList(list.map(x => ({ ...x, selectedForDeactivation: false })));
+                        }
+                        e.target.value = ""; // Reset dropdown after action
                       }}
+                      style={{ fontSize: "11px", padding: "2px 4px", borderRadius: "4px", border: "1px solid #e5e7eb", outline: "none", cursor: "pointer", background: "white" }}
                     >
-                      <ChevronDown size={14} />
-                    </button>
+                      <option value="">Options</option>
+                      <option value="Select All">Select All</option>
+                      <option value="Deselect All">Deselect All</option>
+                    </select>
                   </div>
-                  {statusFilterOpen && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        right: 0,
-                        background: "var(--panel)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "6px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                        zIndex: 10,
-                        minWidth: "110px",
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "4px 0"
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Active"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Active" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Active" ? 600 : 400
-                        }}
-                      >
-                        Active
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Inactive"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Inactive" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Inactive" ? 600 : 400
-                        }}
-                      >
-                        Inactive
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("All"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          borderTop: "1px solid var(--border)",
-                          background: "none",
-                          color: "var(--muted)",
-                          fontSize: "11px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Clear Filter
-                      </button>
-                    </div>
-                  )}
+                </th>
+                <th>Effective Date</th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
+                  </div>
                 </th>
               </tr>
             </thead>

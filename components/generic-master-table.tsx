@@ -1,10 +1,13 @@
 "use client";
 
-import { Check, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { RotateCcw, Trash2, Check, Plus, Pencil, Ban } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { apiClient, type MasterField, type MasterRecord, type MasterSchema } from "@/lib/api-client";
 import Link from "next/link";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
+import { CustomDatePicker } from "@/components/custom-date-picker";
 
 /**
  * Renders a full CRUD console (list + add/edit form) for any of the 38
@@ -15,10 +18,14 @@ import Link from "next/link";
  * the backend's registry, not from anything hardcoded here.
  */
 export function GenericMasterTable({ masterKey }: { masterKey: string }) {
+  const [isSuperStockist, setIsSuperStockist] = useState(false);
+  const [isReportingStructure, setIsReportingStructure] = useState(false);
   const [schema, setSchema] = useState<MasterSchema | null>(null);
   const [rows, setRows] = useState<MasterRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [statusFilter, setStatusFilter] = useState("All");
   const [formRow, setFormRow] = useState<Record<string, unknown> | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MasterRecord | null>(null);
@@ -63,6 +70,41 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
             { key: "status", label: "Status", type: "string" }
           ]
         };
+      } else if (masterKey === "doctorStockistCombined") {
+        const [smRes, addrRes, contRes, hqRes, licRes, rRes] = await Promise.all([
+          apiClient.masterSchema("stockistMaster"),
+          apiClient.masterSchema("stockistAddress"),
+          apiClient.masterSchema("stockistContact"),
+          apiClient.masterSchema("stockistHeadquarters"),
+          apiClient.masterSchema("stockistLicenseDetails"),
+          apiClient.masterRecords("stockistMaster")
+        ]);
+        
+        const allFields = [
+          ...smRes.data.fields,
+          ...addrRes.data.fields,
+          ...contRes.data.fields,
+          ...hqRes.data.fields,
+          ...licRes.data.fields
+        ];
+
+        // remove duplicates by key
+        const uniqueFields: any[] = [];
+        const seenKeys = new Set<string>();
+        for (const f of allFields) {
+          if (!seenKeys.has(f.key) && f.key !== "status") {
+            seenKeys.add(f.key);
+            uniqueFields.push(f);
+          }
+        }
+
+        schemaData = {
+          key: "doctorStockistCombined",
+          title: "Stockist Master",
+          keyFields: smRes.data.keyFields,
+          fields: uniqueFields
+        };
+        rowsData = rRes.data;
       } else {
         const [schemaRes, recordsRes] = await Promise.all([
           apiClient.masterSchema(masterKey),
@@ -73,9 +115,12 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       }
 
       if (schemaData && schemaData.fields) {
-        schemaData.fields = schemaData.fields.map(f => 
-          f.label === "Doctor Name" ? { ...f, label: "Customer Name" } : f
-        );
+        schemaData.fields = schemaData.fields.map(f => {
+          if (f.label === "Doctor Name") return { ...f, label: "Customer Name" };
+          if (f.label === "Doctor Category (A/B/C)") return { ...f, label: "Doctor Category" };
+          if (f.label.toUpperCase() === "ACTIVE") return { ...f, label: "Status", key: "status" };
+          return f;
+        });
 
         if (masterKey === "doctorMaster") {
           const extraFields = [
@@ -112,7 +157,60 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
               schemaData.fields.push(extra as any);
             }
           }
+        } else if (masterKey === "stockistMaster") {
+          if (isSuperStockist) {
+             schemaData.fields = [
+               { key: "stockistCode", label: "Stockist Code", type: "string" },
+               { key: "stockistName", label: "Stockist Name", type: "string" },
+               { key: "contactNumber", label: "Contact Number", type: "string" },
+               { key: "emailAddress", label: "Email Address", type: "string" },
+               { key: "location", label: "Location", type: "string" },
+               { key: "city", label: "City", type: "string" },
+               { key: "state", label: "State", type: "string" },
+               { key: "pincode", label: "Pincode", type: "string" },
+               { key: "gstNo", label: "GST No", type: "string" },
+               { key: "licenseNo", label: "License No", type: "string" }
+             ];
+             schemaData.title = "Super Stockist";
+          } else {
+            schemaData.fields = schemaData.fields.filter((f: any) => 
+              f.label.toLowerCase() !== "gst no" && f.label.toLowerCase() !== "license no"
+            );
+            
+            const stockistNameIdx = schemaData.fields.findIndex((f: any) => f.label.toLowerCase() === "stockist name");
+            if (stockistNameIdx !== -1) {
+              const newFields = [
+                { key: "contactNumber", label: "Contact Number", type: "string" },
+                { key: "emailAddress", label: "Email Address", type: "string" },
+                { key: "territory", label: "Territory", type: "string" },
+                { key: "hq", label: "HQ", type: "string" },
+                { key: "state", label: "State", type: "string" },
+                { key: "pinCode", label: "Pin Code", type: "string" }
+              ];
+              const fieldsToAdd = newFields.filter(nf => !schemaData.fields.some((f: any) => f.key === nf.key || f.label.toLowerCase() === nf.label.toLowerCase()));
+              schemaData.fields.splice(stockistNameIdx + 1, 0, ...fieldsToAdd);
+            }
+            schemaData.title = "Stockist Master";
+          }
+        } else if (masterKey === "expenseReports" && isReportingStructure) {
+          schemaData.fields = [
+            { key: "division", label: "Division", type: "string" },
+            { key: "bh", label: "BH", type: "string" },
+            { key: "zbm", label: "ZBM", type: "string" },
+            { key: "rbm", label: "RBM", type: "string" },
+            { key: "abm", label: "ABM", type: "string" },
+            { key: "be", label: "BE", type: "string" }
+          ];
+          schemaData.title = "Reporting Structure";
         }
+
+        // Globally ensure ALL masters have a Status column AT THE VERY END
+        const statusIdx = schemaData.fields.findIndex((f: any) => f.key === "status" || f.label.toUpperCase() === "STATUS");
+        let statusField = { key: "status", label: "Status", type: "string" };
+        if (statusIdx !== -1) {
+          statusField = schemaData.fields.splice(statusIdx, 1)[0];
+        }
+        schemaData.fields.push(statusField as any);
       }
       setSchema(schemaData);
       setRows(rowsData);
@@ -145,10 +243,21 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     }
   }
 
+  // Hardcoded keys for which we should hide the Edit and Inactive buttons
+  const readonlyKeys = [
+    "holidayStateMaster", "holidayCalendar", // Statewise - Holiday Fixation
+    "stockistMaster", "stockistAddress", "stockistContact", "stockistHeadquarters", "stockistDivisionMapping", "stockistBankDetails", "stockistLicenseDetails", "stockistStatus", // Stockist Details
+    "expenseCategory", "expenseTypes", "sfc", "allowanceFixation", // Expense Setup
+    "managerTravelApproval", "expenseApproval", "expenseReports", // Manager Expense
+    "employeePersonalInfo", "personalInformationView", // Personal Information
+    "targetMaster", "primarySales", "secondarySales", "claimsMaster" // Sales
+  ];
+  const isReadonly = readonlyKeys.includes(masterKey);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masterKey]);
+  }, [masterKey, isSuperStockist, isReportingStructure]);
 
   function optionsFor(f: MasterField): string[] | null {
     if (f.options) return f.options;
@@ -168,6 +277,23 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     const match = records.find((r) => r[f.computed!.lookupField] === currentKey);
     return match ? String(match[f.computed.displayField] ?? "") : "";
   }
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      let isMatch = true;
+      for (const [key, val] of Object.entries(columnFilters)) {
+        if (val !== "All") {
+          const rowVal = String((row as any)[key] || "").toUpperCase();
+          if (rowVal !== val.toUpperCase()) isMatch = false;
+        }
+      }
+      if (statusFilter !== "All") {
+        const rowStatus = String((row as any).status || "").toUpperCase();
+        if (rowStatus !== statusFilter.toUpperCase()) isMatch = false;
+      }
+      return isMatch;
+    });
+  }, [rows, columnFilters, statusFilter]);
 
   if (!schema && loading) {
     return (
@@ -243,77 +369,6 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     }
   }
 
-  if (formRow) {
-    const isEdit = !!formRow.id;
-    return (
-      <section className="subdivision-console">
-        <div className="subdivision-head">
-          <div>
-            <p className="subdivision-eyebrow">Master Setup</p>
-            <h2>{isEdit ? `Edit ${schema.title}` : `Add ${schema.title}`}</h2>
-            <p>Fields exactly as defined for this master in the Technical Report.</p>
-          </div>
-          <button className="button button-secondary" onClick={() => setFormRow(null)} type="button">
-            <RotateCcw size={16} /> Back
-          </button>
-        </div>
-        <div className="subdivision-form-card">
-          {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
-          {schema.fields.map((f: MasterField) => {
-            const opts = optionsFor(f);
-            const commonStyle: CSSProperties = {
-              width: "100%",
-              padding: "8px 12px",
-              borderRadius: "6px",
-              border: "1px solid #e5e7eb",
-              outline: "none",
-              fontSize: "14px",
-              background: "var(--panel)"
-            };
-            return (
-              <label className="field" key={f.key}>
-                <span>
-                  {schema.keyFields.includes(f.key) ? "* " : ""}
-                  {f.label}
-                </span>
-                {f.computed ? (
-                  <input
-                    type="text"
-                    value={computedValueFor(f, formRow)}
-                    readOnly
-                    placeholder={`Auto-filled from ${f.label.replace("Name", "Code")}`}
-                    style={{ ...commonStyle, background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }}
-                  />
-                ) : opts ? (
-                  <select
-                    value={(formRow[f.key] as string | undefined) ?? ""}
-                    onChange={(e) => setFormRow({ ...formRow, [f.key]: e.target.value })}
-                    style={commonStyle}
-                  >
-                    <option value="">Select {f.label}</option>
-                    {opts.map((o) => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
-                    value={(formRow[f.key] as string | number | undefined) ?? ""}
-                    onChange={(e) => setFormRow({ ...formRow, [f.key]: e.target.value })}
-                    style={commonStyle}
-                  />
-                )}
-              </label>
-            );
-          })}
-          <button className="button" style={{ marginTop: "12px" }} onClick={saveForm} type="button" disabled={saving}>
-            <Check size={16} /> {saving ? "Saving..." : isEdit ? "Save Changes" : `Add ${schema.title}`}
-          </button>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <>
       {deleteTarget && (
@@ -336,6 +391,78 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
           </div>
         </div>
       )}
+      {formRow && (() => {
+        const isEdit = !!formRow.id;
+        return (
+          <div
+            style={{
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50,
+              padding: "20px"
+            }}
+          >
+            <div style={{ background: "var(--panel)", borderRadius: "10px", padding: "24px", minWidth: "500px", maxWidth: "90vw", maxHeight: "90vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{isEdit ? `Edit ${schema.title}` : `Add ${schema.title}`}</h2>
+                <button className="button button-secondary" onClick={() => setFormRow(null)} type="button">
+                  <RotateCcw size={16} /> Close
+                </button>
+              </div>
+              <div className="subdivision-form-card" style={{ boxShadow: "none", padding: 0 }}>
+                {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
+                {schema.fields.map((f: MasterField) => {
+                  const opts = optionsFor(f);
+                  const commonStyle: CSSProperties = {
+                    width: "100%", padding: "8px 12px", borderRadius: "6px",
+                    border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)"
+                  };
+                  return (
+                    <label className="field" key={f.key} style={{ display: "block", marginBottom: "12px" }}>
+                      <span style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>
+                        {schema.keyFields.includes(f.key) ? "* " : ""}
+                        {f.label}
+                      </span>
+                      {f.computed ? (
+                        <input
+                          type="text" value={computedValueFor(f, formRow)} readOnly
+                          placeholder={`Auto-filled from ${f.label.replace("Name", "Code")}`}
+                          style={{ ...commonStyle, background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }}
+                        />
+                      ) : opts ? (
+                        <select
+                          value={(formRow[f.key] as string | undefined) ?? ""}
+                          onChange={(e) => setFormRow({ ...formRow, [f.key]: e.target.value })}
+                          style={commonStyle}
+                        >
+                          <option value="">Select {f.label}</option>
+                          {opts.map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </select>
+                      ) : f.type === "date" ? (
+                        <CustomDatePicker
+                          value={(formRow[f.key] as string) || ""}
+                          onChange={(val) => setFormRow({ ...formRow, [f.key]: val })}
+                        />
+                      ) : (
+                        <input
+                          type={f.type === "number" ? "number" : "text"}
+                          value={(formRow[f.key] as string | number | undefined) ?? ""}
+                          onChange={(e) => setFormRow({ ...formRow, [f.key]: e.target.value })}
+                          style={commonStyle}
+                        />
+                      )}
+                    </label>
+                  );
+                })}
+                <button className="button" style={{ marginTop: "16px", width: "100%" }} onClick={saveForm} type="button" disabled={saving}>
+                  <Check size={16} /> {saving ? "Saving..." : isEdit ? "Save Changes" : `Add ${schema.title}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <section className="subdivision-console">
         <div className="subdivision-head">
           <div>
@@ -345,31 +472,88 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
           </div>
           <div className="subdivision-actions">
             <button className="button" onClick={openAddForm} type="button">
-              <Plus size={16} /> Add {schema.title}
+              Add {schema.title}
             </button>
           </div>
         </div>
         {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}
-        <div className="subdivision-stats">
+        <div className="subdivision-stats" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <article>
             <span>Total Records</span>
             <strong>{rows.length}</strong>
           </article>
+          {masterKey === "stockistMaster" && (
+            <button 
+              className="button" 
+              onClick={() => setIsSuperStockist(!isSuperStockist)} 
+              type="button" 
+              style={{ padding: "8px 16px", backgroundColor: isSuperStockist ? "var(--brand)" : "white", color: isSuperStockist ? "white" : "var(--brand)", border: "1px solid var(--brand)", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+            >
+              {isSuperStockist ? "Stockist" : "Super Stockist"}
+            </button>
+          )}
           {masterKey === "doctorMaster" && (
-            <Link className="card module-card" href="/admin/workspace/division-dashboard/division-navigation-tabs/division-master/doctor/chemist" style={{ borderLeft: "4px solid var(--brand-strong)", width: "300px", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 16px" }}>
+            <Link className="card module-card" href="/admin/workspace/division-dashboard/division-navigation-tabs/division-master/doctor/chemist" style={{ borderLeft: "4px solid var(--brand-strong)", width: "300px", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "0 16px" }}>
               <h3 className="section-title">Chemist</h3>
             </Link>
+          )}
+          {masterKey === "doctorAdditionalInfo" && (
+            <a 
+              href="https://maps.google.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="button"
+              style={{ padding: "8px 16px", backgroundColor: "var(--brand)", color: "white", border: "1px solid var(--brand)", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", textDecoration: "none" }}
+            >
+              Map
+            </a>
+          )}
+          {masterKey === "expenseReports" && (
+            <button 
+              className="button" 
+              onClick={() => setIsReportingStructure(!isReportingStructure)} 
+              type="button" 
+              style={{ padding: "8px 16px", backgroundColor: isReportingStructure ? "var(--brand)" : "white", color: isReportingStructure ? "white" : "var(--brand)", border: "1px solid var(--brand)", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+            >
+              {isReportingStructure ? "Reports" : "Reporting Structure"}
+            </button>
           )}
         </div>
         <div className="subdivision-table-card" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 250px)" }}>
           <table className="subdivision-table">
             <thead>
               <tr>
-                {schema.fields.map((f) => (
-                  <th key={f.key}>{f.label}</th>
-                ))}
-                <th>Edit</th>
-                <th>Deactivate</th>
+                {schema.fields.map((f) => {
+                  const isFiltered = ["hq code", "headquarters name", "metro / non-metro", "zone", "patch name", "zone name", "region name", "division name", "division short name", "therapy name", "molecule name", "therapy", "brand name", "division", "product name", "brand", "product", "batch no", "gender", "department", "designation", "region", "hq", "patch", "qualification", "specialty", "area", "city", "state", "country", "doctor category", "potential", "visit frequency", "bank"].includes(f.label.toLowerCase());
+                  let options: {label: string, value: string}[] = [];
+                  if (isFiltered) {
+                    const uniqueValues = Array.from(new Set(rows.map(r => String((r as any)[f.key] || "")))).filter(Boolean).sort();
+                    options = uniqueValues.map(v => ({ label: v, value: v }));
+                  }
+                  
+                  return (
+                    <th key={f.key}>
+                      {f.key.toLowerCase() === "status" || f.label.toLowerCase() === "status" ? (
+                        <div style={{ minWidth: "140px" }}>
+                          <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
+                        </div>
+                      ) : isFiltered ? (
+                        <div style={{ minWidth: "140px" }}>
+                          <ColumnFilterDropdown 
+                            title={f.label} 
+                            value={columnFilters[f.key] || "All"} 
+                            options={options} 
+                            onChange={(val) => setColumnFilters(prev => ({ ...prev, [f.key]: val }))} 
+                          />
+                        </div>
+                      ) : (
+                        f.label
+                      )}
+                    </th>
+                  );
+                })}
+                {!isReadonly && <th>Edit</th>}
+                {!isReadonly && <th>Inactive</th>}
               </tr>
             </thead>
             <tbody>
@@ -387,21 +571,25 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                   </td>
                 </tr>
               )}
-              {rows.map((row) => (
+              {filteredRows.map((row) => (
                 <tr key={row.id}>
                   {schema.fields.map((f) => (
                     <td key={f.key}>{f.computed ? computedValueFor(f, row) : String(row[f.key] ?? "")}</td>
                   ))}
-                  <td>
-                    <button className="button button-secondary" onClick={() => openEditForm(row)} type="button">
-                      Edit
-                    </button>
-                  </td>
-                  <td>
-                    <button className="button button-secondary" onClick={() => setDeleteTarget(row)} type="button">
-                      <Trash2 size={14} />
-                    </button>
-                  </td>
+                  {!isReadonly && (
+                    <td>
+                      <button className="subdivision-icon-button" onClick={() => openEditForm(row)} type="button" title="Edit">
+                        <Pencil size={15} />
+                      </button>
+                    </td>
+                  )}
+                  {!isReadonly && (
+                    <td>
+                      <button className="subdivision-danger-button" onClick={() => setDeleteTarget(row)} type="button" title="Deactivate">
+                        <Ban />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

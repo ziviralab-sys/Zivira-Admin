@@ -1,6 +1,8 @@
 "use client";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
 
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient, type PaginationInfo } from "@/lib/api-client";
 import { PaginationControls } from "./pagination-controls";
@@ -160,111 +162,129 @@ export function TerritoryListedDoctor() {
   }
 
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
   const filtered = list.filter(x => {
     const s = search.toLowerCase();
+    let isMatch = true;
+
+    // Status Filter
     const isActive = x.status === "Active" || x.status === "ACTIVE";
     const statusMatch = statusFilter === "All" ||
       (statusFilter === "Active" && isActive) ||
       (statusFilter === "Inactive" && !isActive);
       
+    if (!statusMatch) isMatch = false;
+
+    // Search Box
     const nameStr = (x.name || x.doctorName || "").toLowerCase();
     const patchStr = (x.territory || x.patch || "").toLowerCase();
     const codeStr = (x.doctorCode || x.code || "").toLowerCase();
+    if (s && !(nameStr.includes(s) || patchStr.includes(s) || codeStr.includes(s))) {
+        isMatch = false;
+    }
 
-    const textMatch = nameStr.includes(s) || patchStr.includes(s) || codeStr.includes(s);
-    return statusMatch && textMatch;
+    // Column Filters
+    for (const [key, val] of Object.entries(columnFilters)) {
+      if (val !== "All") {
+        const rowVal = String((x as any)[key] || "").toUpperCase();
+        if (rowVal !== val.toUpperCase()) isMatch = false;
+      }
+    }
+
+    return isMatch;
   });
 
-  if (view !== "list") {
-    return (
+  return (
+    <>
+      {view !== "list" && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000,
+            display: "flex", justifyContent: "center", alignItems: "center",
+            backdropFilter: "blur(4px)"
+          }}
+        >
+          <div style={{ background: "var(--panel)", borderRadius: "10px", padding: "24px", minWidth: "500px", maxWidth: "90vw", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{view === "add" ? "Map Doctor to Territory" : "Edit Territory Mapping"}</h2>
+              <button className="button button-secondary" onClick={() => setView("list")} type="button">
+                <RotateCcw size={16} /> Close
+              </button>
+            </div>
+            
+            <form onSubmit={handleSave} className="subdivision-form-card" style={{ boxShadow: "none", padding: 0 }}>
+              {error && <p style={{ color: "#ef4444", fontSize: "13px" }}>{error}</p>}
+              <div style={{ gridColumn: "span 1", borderBottom: "1px solid var(--border)", paddingBottom: "8px", fontWeight: 700, color: "#9d174d", fontSize: "14px", marginBottom: "16px" }}>
+                Territory & Doctor Information
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Select Patch</label>
+                <select value={form.patch} onChange={e => handlePatchChange(e.target.value)} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)" }}>
+                  {patchesList.map(p => (
+                    <option key={p.name} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Select Doctor</label>
+                <select value={form.doctorCode} onChange={e => handleDoctorChange(e.target.value)} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)" }}>
+                  {doctorsList.map(d => (
+                    <option key={d.code} value={d.code}>{d.name} ({d.code})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Ophthalmology / Specialty</label>
+                <input readOnly value={form.specialty} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }} />
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Category</label>
+                <input readOnly value={form.category} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }} />
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Assigned Medical Representative</label>
+                <input readOnly value={form.mr} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }} />
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Headquarters (HQ)</label>
+                <input readOnly value={form.hq} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }} />
+              </div>
+
+              <div className="field" style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>Status</label>
+                <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as any })} style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)" }}>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+
+              <button className="button" style={{ marginTop: "16px", width: "100%" }} type="submit">
+                <Check size={16} /> Add Mapping
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <section className="subdivision-console">
         <div className="subdivision-head">
           <div>
             <p className="subdivision-eyebrow">Field Force Entries</p>
-            <h2>{view === "add" ? "Map Doctor to Territory" : "Edit Territory Mapping"}</h2>
-            <p>Create relationships between doctors and active sales patches.</p>
+            <h2>Territory - Listed Doctor</h2>
+            <p>Map and manage doctors assigned under respective patch sales networks.</p>
           </div>
-          <button className="button button-secondary" onClick={() => setView("list")} type="button">
-            <RotateCcw size={16} /> Back
-          </button>
-        </div>
-
-        <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
-          
-          <div style={{ gridColumn: "span 2", borderBottom: "1px solid var(--border)", paddingBottom: "8px", fontWeight: 700, color: "#9d174d", fontSize: "14px" }}>
-            Territory & Doctor Information
+          <div className="subdivision-actions">
+            
+            <button className="button" onClick={handleAdd} type="button"> Map Doctor</button>
           </div>
-
-          <div className="field">
-            <label>Select Patch</label>
-            <select value={form.patch} onChange={e => handlePatchChange(e.target.value)}>
-              {patchesList.map(p => (
-                <option key={p.name} value={p.name}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field">
-            <label>Select Doctor</label>
-            <select value={form.doctorCode} onChange={e => handleDoctorChange(e.target.value)}>
-              {doctorsList.map(d => (
-                <option key={d.code} value={d.code}>{d.name} ({d.code})</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field">
-            <label>Ophthalmology / Specialty</label>
-            <input readOnly value={form.specialty} style={{ opacity: 0.7 }} />
-          </div>
-
-          <div className="field">
-            <label>Category</label>
-            <input readOnly value={form.category} style={{ opacity: 0.7 }} />
-          </div>
-
-          <div className="field">
-            <label>Assigned Medical Representative</label>
-            <input readOnly value={form.mr} style={{ opacity: 0.7 }} />
-          </div>
-
-          <div className="field">
-            <label>Headquarters (HQ)</label>
-            <input readOnly value={form.hq} style={{ opacity: 0.7 }} />
-          </div>
-
-          <div className="field">
-            <label>Status</label>
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as any })}>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
-            <button className="button" type="submit">
-              <Check size={16} /> Add Mapping
-            </button>
-          </div>
-        </form>
-      </section>
-    );
-  }
-
-  return (
-    <section className="subdivision-console">
-      <div className="subdivision-head">
-        <div>
-          <p className="subdivision-eyebrow">Field Force Entries</p>
-          <h2>Territory - Listed Doctor</h2>
-          <p>Map and manage doctors assigned under respective patch sales networks.</p>
-        </div>
-        <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Map Doctor</button>
-        </div>
       </div>
 
       <div style={{ marginBottom: "16px" }}>
@@ -289,98 +309,44 @@ export function TerritoryListedDoctor() {
                 <th>Patch</th>
                 <th>Doctor Code</th>
                 <th>Doctor Name</th>
-                <th>Specialty</th>
-                <th>Category</th>
-                <th>Medical Representative</th>
-                <th>HQ</th>
-                <th style={{ minWidth: "130px", position: "relative" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                    <span>Status</span>
-                    <button
-                      type="button"
-                      onClick={() => setStatusFilterOpen(!statusFilterOpen)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--muted)",
-                        cursor: "pointer",
-                        padding: "2px",
-                        display: "flex",
-                        alignItems: "center"
-                      }}
-                    >
-                      <ChevronDown size={14} />
-                    </button>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Specialty" 
+                      value={columnFilters['specialty'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.specialty || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, specialty: val }))} 
+                    />
                   </div>
-                  {statusFilterOpen && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        right: 0,
-                        background: "var(--panel)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "6px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                        zIndex: 10,
-                        minWidth: "110px",
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "4px 0"
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Active"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Active" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Active" ? 600 : 400
-                        }}
-                      >
-                        Active
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Inactive"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Inactive" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Inactive" ? 600 : 400
-                        }}
-                      >
-                        Inactive
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("All"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          borderTop: "1px solid var(--border)",
-                          background: "none",
-                          color: "var(--muted)",
-                          fontSize: "11px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Clear Filter
-                      </button>
-                    </div>
-                  )}
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Category" 
+                      value={columnFilters['category'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.category || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, category: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>Medical Representative</th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="HQ" 
+                      value={columnFilters['hq'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.hq || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, hq: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
+                  </div>
                 </th>
                 <th>Edit</th>
-                <th>Deactivate</th>
+                <th>Inactive</th>
               </tr>
             </thead>
             <tbody>
@@ -418,7 +384,7 @@ export function TerritoryListedDoctor() {
                   </td>
                   <td>
                     <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                      <Trash2 size={15} />
+                      <Ban />
                     </button>
                   </td>
                 </tr>
@@ -442,5 +408,6 @@ export function TerritoryListedDoctor() {
         />
       )}
     </section>
+    </>
   );
 }

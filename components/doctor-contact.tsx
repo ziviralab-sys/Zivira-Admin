@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Ban } from "lucide-react";
 import { useState } from "react";
 
 type ContactRow = {
@@ -105,7 +105,7 @@ export function DoctorContact() {
           <p>Create and manage doctor phone numbers and email addresses.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Contact</button>
         </div>
       </div>
@@ -155,7 +155,7 @@ export function DoctorContact() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

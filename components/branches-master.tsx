@@ -1,15 +1,12 @@
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
 "use client";
-
 import type { CompanyBranch } from "@zivira/types";
-import { Check, Pencil, Plus, Star } from "lucide-react";
+import { Pencil, Star, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { downloadCsv } from "@/lib/download-csv";
-
 const INDIAN_STATES = ["Tamil Nadu", "Kerala", "Karnataka", "Andhra Pradesh", "Telangana", "Maharashtra", "Delhi", "West Bengal", "Gujarat", "Punjab"];
-
 const emptyForm = { branchName: "", gstNumber: "", address: "", city: "", state: INDIAN_STATES[0], pincode: "", isHeadquarters: false };
-
 export function BranchesMaster() {
   const [branches, setBranches] = useState<CompanyBranch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +15,6 @@ export function BranchesMaster() {
   const [editTarget, setEditTarget] = useState<CompanyBranch | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-
   async function load() {
     setLoading(true); setError("");
     try { setBranches((await apiClient.branches()).data); }
@@ -26,14 +22,12 @@ export function BranchesMaster() {
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
-
   function openAdd() { setForm(emptyForm); setView("add"); }
   function openEdit(b: CompanyBranch) {
     setEditTarget(b);
     setForm({ branchName: b.branchName, gstNumber: b.gstNumber, address: b.address, city: b.city, state: b.state, pincode: b.pincode, isHeadquarters: b.isHeadquarters });
     setView("edit");
   }
-
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true); setError("");
@@ -48,14 +42,12 @@ export function BranchesMaster() {
       setSaving(false);
     }
   }
-
   function exportCsv() {
     downloadCsv("branches-gst.csv", branches.map(b => ({
       BranchName: b.branchName, GSTNumber: b.gstNumber, City: b.city, State: b.state, Pincode: b.pincode,
       HeadOffice: b.isHeadquarters ? "Yes" : "No", Status: b.status
     })));
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -66,12 +58,10 @@ export function BranchesMaster() {
         </div>
         <div className="subdivision-actions">
           <button className="button button-secondary" onClick={exportCsv} disabled={!branches.length} type="button">Export CSV</button>
-          <button className="button" onClick={openAdd} type="button"><Plus size={16} /> Add Branch</button>
+          <button className="button" onClick={openAdd} type="button"> Add Branch</button>
         </div>
       </div>
-
       {error && <p className="form-error">{error}</p>}
-
       {view !== "list" ? (
         <form onSubmit={save} className="card form-grid">
           <div className="field">
@@ -108,7 +98,7 @@ export function BranchesMaster() {
           </div>
           <div style={{ gridColumn: "span 2", display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
             <button className="button button-secondary" type="button" onClick={() => setView("list")}>Cancel</button>
-            <button className="button" type="submit" disabled={saving}><Check size={16} /> {saving ? "Saving…" : "Save Branch"}</button>
+            <button className="button" type="submit" disabled={saving}>{saving ? "Saving…" : "Save Branch"}</button>
           </div>
         </form>
       ) : (

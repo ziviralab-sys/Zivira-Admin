@@ -1,11 +1,8 @@
 "use client";
-
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 export function BackButton({ fallback = "/admin/home" }: { fallback?: string }) {
   const router = useRouter();
-
   return (
     <button
       className="button button-secondary"
@@ -14,7 +11,6 @@ export function BackButton({ fallback = "/admin/home" }: { fallback?: string }) 
           router.back();
           return;
         }
-
         router.push(fallback);
       }}
       type="button"

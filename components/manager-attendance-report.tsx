@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 import { formatDate } from "@/lib/format-date";
 
@@ -190,7 +190,7 @@ export function ManagerAttendanceReport() {
           <p>Review comprehensive field force daily attendance check logs.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Log</button>
         </div>
       </div>
@@ -354,7 +354,7 @@ export function ManagerAttendanceReport() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

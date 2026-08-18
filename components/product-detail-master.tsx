@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown, Ban } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient, type ProductCatalogItem } from "@/lib/api-client";
 
@@ -408,7 +408,7 @@ export function ProductDetailMaster() {
                 )}
               </th>
               <th>Edit</th>
-              <th>Deactivate</th>
+              <th>Inactive</th>
             </tr>
           </thead>
           <tbody>
@@ -466,7 +466,7 @@ export function ProductDetailMaster() {
                   </td>
                   <td>
                     <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} title="Deactivate" type="button" disabled={row.status === "INACTIVE"}>
-                      <Trash2 size={15} />
+                      <Ban />
                     </button>
                   </td>
                 </tr>

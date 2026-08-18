@@ -1,7 +1,9 @@
 "use client";
 
 import type { Employee } from "@zivira/types";
-import { Plus, RefreshCw, X, Check } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
@@ -12,6 +14,16 @@ const initialFieldForce: any[] = [];
 export function EmployeeManager() {
   const [employees, setEmployees] = useState<any[]>(initialFieldForce);
   const [showForm, setShowForm] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      for (const [key, val] of Object.entries(columnFilters)) {
+        if (val !== "All" && String(emp[key] || "").toUpperCase() !== val.toUpperCase()) return false;
+      }
+      return true;
+    });
+  }, [employees, columnFilters]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -100,14 +112,23 @@ export function EmployeeManager() {
           {loading ? "Refreshing" : "Refresh"}
         </button>
         <button className="button" onClick={() => setShowForm((value) => !value)} type="button">
-          <Plus size={17} />
           Add Employee
         </button>
       </div>
       {error ? <p className="form-error">{error}</p> : null}
       
       {showForm ? (
-        <form className="card form-grid" onSubmit={handleSave} style={{ animation: "popIn 0.3s ease-out forwards", marginBottom: "20px" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div style={{ background: "var(--panel)", borderRadius: "10px", width: "100%", maxWidth: "800px", maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
+            <div className="subdivision-head" style={{ padding: "20px 24px", borderBottom: "1px solid #e5e7eb", marginBottom: 0 }}>
+              <div>
+                <h2>Add Employee</h2>
+              </div>
+              <button className="button button-secondary" onClick={() => setShowForm(false)} type="button">
+                Back
+              </button>
+            </div>
+            <form className="form-grid" onSubmit={handleSave} style={{ padding: "24px", overflowY: "auto" }}>
           <div className="field">
             <label>Employee Code</label>
             <input required value={form.employeeCode} onChange={(e) => setForm({ ...form, employeeCode: e.target.value })} placeholder="e.g. EMP-MR-0001" />
@@ -205,10 +226,12 @@ export function EmployeeManager() {
             </select>
           </div>
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <button className="button button-secondary" type="button" onClick={() => setShowForm(false)}><X size={15} /> Cancel</button>
-            <button className="button" type="submit"><Check size={15} /> Add Employee</button>
+              <button className="button button-secondary" type="button" onClick={() => setShowForm(false)}>Cancel</button>
+              <button className="button" type="submit">Add Employee</button>
+            </div>
+            </form>
           </div>
-        </form>
+        </div>
       ) : null}
 
       <div className="table-wrap" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 240px)" }}>
@@ -217,24 +240,50 @@ export function EmployeeManager() {
             <tr>
               <th>Employee Code</th>
               <th>Employee Name</th>
-              <th>Gender</th>
-              <th>DOB</th>
-              <th>DOJ</th>
-              <th>Mobile</th>
-              <th>Email</th>
-              <th>Department</th>
-              <th>Designation</th>
-              <th>Division</th>
-              <th>Reporting Manager</th>
-              <th>Region</th>
-              <th>HQ</th>
-              <th>Patch</th>
-              <th>Driving License</th>
+              {[
+                { key: "gender", label: "Gender" },
+                { key: "dob", label: "DOB" },
+                { key: "joinDate", label: "DOJ" },
+                { key: "phone", label: "Mobile" },
+                { key: "email", label: "Email" },
+                { key: "department", label: "Department" },
+                { key: "designation", label: "Designation" },
+                { key: "division", label: "Division" },
+                { key: "reportingManager", label: "Reporting Manager" },
+                { key: "region", label: "Region" },
+                { key: "hq", label: "HQ" },
+                { key: "patch", label: "Patch" },
+                { key: "drivingLicense", label: "Driving License" }
+              ].map(f => {
+                const isFiltered = ["Gender", "Department", "Designation", "Division", "Region", "HQ", "Patch"].includes(f.label);
+                let options: {label: string, value: string}[] = [];
+                if (isFiltered) {
+                  const uniqueValues = Array.from(new Set(employees.map(r => String((r as any)[f.key] || "")))).filter(Boolean).sort();
+                  options = uniqueValues.map(v => ({ label: v, value: v }));
+                }
+                
+                return (
+                  <th key={f.key}>
+                    {isFiltered ? (
+                      <div style={{ minWidth: "140px" }}>
+                        <ColumnFilterDropdown 
+                          title={f.label} 
+                          value={columnFilters[f.key] || "All"} 
+                          options={options} 
+                          onChange={(val) => setColumnFilters(prev => ({ ...prev, [f.key]: val }))} 
+                        />
+                      </div>
+                    ) : (
+                      f.label
+                    )}
+                  </th>
+                );
+              })}
               <th>Employee Status</th>
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee, i) => (
+            {filteredEmployees.map((employee, i) => (
               <tr key={employee.id || i}>
                 <td style={{ fontWeight: 600 }}>{employee.employeeCode}</td>
                 <td><strong>{employee.name}</strong></td>

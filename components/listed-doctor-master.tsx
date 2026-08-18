@@ -1,10 +1,10 @@
 "use client";
-
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil } from "lucide-react";
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { RotateCcw, SlidersHorizontal, Trash2, Pencil, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient, type PaginationInfo } from "@/lib/api-client";
 import { PaginationControls } from "./pagination-controls";
-
 type ListedDoctorRow = {
   id: string;
   code: string;
@@ -16,24 +16,21 @@ type ListedDoctorRow = {
   city: string;
   status: "Active" | "Inactive";
 };
-
 const initialDoctors: ListedDoctorRow[] = [];
-
 export function ListedDoctorMaster() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add" | "edit">("list");
   const [activeFormTab, setActiveFormTab] = useState<number>(1);
   const [search, setSearch] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: 10, total: 0, totalPages: 0 });
-
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [statusFilter, setStatusFilter] = useState("All");
   useEffect(() => {
     fetchData(pagination.page);
   }, []);
-
   async function fetchData(page: number) {
     try {
       setLoading(true);
@@ -46,7 +43,6 @@ export function ListedDoctorMaster() {
       setLoading(false);
     }
   }
-
   // Form inputs for 7 tabs
   const [form, setForm] = useState({
     code: "",
@@ -57,7 +53,6 @@ export function ListedDoctorMaster() {
     mobile: "9876543210",
     city: "Chennai",
     status: "Active" as "Active" | "Inactive",
-
     // Address
     clinicName: "",
     address: "",
@@ -65,27 +60,21 @@ export function ListedDoctorMaster() {
     state: "Tamil Nadu",
     country: "India",
     pinCode: "",
-
     // Classification
     potential: "High",
     visitFrequency: "Fortnight",
-
     // Territory Mapping
     patch: "T. Nagar",
-
     // Dealer Mapping
     stockist: "Zivira Stockist Chennai",
     chemist: "Apollo Pharmacy",
-
     // Contact details
     email: "",
-
     // Additional Info
     dob: "",
     anniversaryDate: "",
     maritalStatus: "Single"
   });
-
   function handleAdd() {
     const nextCode = `DOC${String(list.length + 1).padStart(4, "0")}`;
     setForm({
@@ -116,7 +105,6 @@ export function ListedDoctorMaster() {
     setActiveFormTab(1);
     setView("add");
   }
-
   function handleEdit(row: any) {
     setSelectedDoc(row);
     setForm({
@@ -147,7 +135,6 @@ export function ListedDoctorMaster() {
     setActiveFormTab(1);
     setView("edit");
   }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -171,20 +158,38 @@ export function ListedDoctorMaster() {
       alert(err.message || "Failed to save doctor");
     }
   }
-
   function handleDelete(id: string) {
     setList(list.map(x => x.id === id ? { ...x, status: "INACTIVE" } : x));
   }
-
   const filtered = list.filter(x => {
     const s = search.toLowerCase();
-    return (
+    let isMatch = true;
+    
+    // Global search text
+    if (s && !(
       (x.name && x.name.toLowerCase().includes(s)) ||
       (x.doctorCode && x.doctorCode.toLowerCase().includes(s)) ||
       (x.specialty && x.specialty.toLowerCase().includes(s))
-    );
-  });
+    )) {
+      isMatch = false;
+    }
 
+    // Column Filters
+    for (const [key, val] of Object.entries(columnFilters)) {
+      if (val !== "All") {
+        const rowVal = String((x as any)[key] || "").toUpperCase();
+        if (rowVal !== val.toUpperCase()) isMatch = false;
+      }
+    }
+    
+    // Status Filter
+    if (statusFilter !== "All") {
+      const rowStatus = String((x as any).status || "").toUpperCase();
+      if (rowStatus !== statusFilter.toUpperCase()) isMatch = false;
+    }
+    
+    return isMatch;
+  });
   if (view !== "list") {
     return (
       <section className="subdivision-console">
@@ -198,7 +203,6 @@ export function ListedDoctorMaster() {
             <RotateCcw size={16} /> Back
           </button>
         </div>
-
         {/* Tab Selection Row for Add/Edit Form */}
         <div style={{ display: "flex", gap: "6px", overflowX: "auto", padding: "6px 0", marginBottom: "16px", borderBottom: "1px solid var(--border)" }}>
           {[
@@ -221,7 +225,6 @@ export function ListedDoctorMaster() {
             </button>
           ))}
         </div>
-
         <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
           {activeFormTab === 1 && (
             <>
@@ -262,7 +265,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 2 && (
             <>
               <div className="field">
@@ -291,7 +293,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 3 && (
             <>
               <div className="field">
@@ -316,7 +317,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 4 && (
             <>
               <div className="field">
@@ -329,7 +329,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 5 && (
             <>
               <div className="field">
@@ -342,7 +341,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 6 && (
             <>
               <div className="field">
@@ -355,7 +353,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           {activeFormTab === 7 && (
             <>
               <div className="field">
@@ -376,7 +373,6 @@ export function ListedDoctorMaster() {
               </div>
             </>
           )}
-
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
             {activeFormTab < 7 ? (
               <button className="button button-secondary" type="button" onClick={() => setActiveFormTab(prev => prev + 1)}>
@@ -384,7 +380,7 @@ export function ListedDoctorMaster() {
               </button>
             ) : (
               <button className="button" type="submit">
-                <Check size={16} /> Add Doctor
+                Add Doctor
               </button>
             )}
           </div>
@@ -392,7 +388,6 @@ export function ListedDoctorMaster() {
       </section>
     );
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -402,11 +397,10 @@ export function ListedDoctorMaster() {
           <p>Maintain general registries of approved practicing doctors.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Add Listed Doctor</button>
+          
+          <button className="button" onClick={handleAdd} type="button"> Add Listed Doctor</button>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by doctor code, name or specialty..."
@@ -415,7 +409,6 @@ export function ListedDoctorMaster() {
           style={{ width: "100%", maxWidth: "360px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
         />
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
         {loading ? (
           <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Loading doctors...</div>
@@ -428,14 +421,54 @@ export function ListedDoctorMaster() {
                 <th>S.No</th>
                 <th>Doctor Code</th>
                 <th>Doctor Name</th>
-                <th>Specialty</th>
-                <th>Qualification</th>
-                <th>Category</th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Specialty" 
+                      value={columnFilters['specialty'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.specialty || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, specialty: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Qualification" 
+                      value={columnFilters['qualification'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.qualification || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, qualification: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="Category" 
+                      value={columnFilters['category'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.category || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, category: val }))} 
+                    />
+                  </div>
+                </th>
                 <th>Mobile</th>
-                <th>City</th>
-                <th>Status</th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <ColumnFilterDropdown 
+                      title="City" 
+                      value={columnFilters['city'] || "All"} 
+                      options={Array.from(new Set(list.map(r => String(r.city || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, city: val }))} 
+                    />
+                  </div>
+                </th>
+                <th>
+                  <div style={{ minWidth: "140px" }}>
+                    <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
+                  </div>
+                </th>
                 <th>Edit</th>
-                <th>Deactivate</th>
+                <th>Inactive</th>
               </tr>
             </thead>
             <tbody>
@@ -469,7 +502,7 @@ export function ListedDoctorMaster() {
                   </td>
                   <td>
                     <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                      <Trash2 size={15} />
+                      <Ban />
                     </button>
                   </td>
                 </tr>

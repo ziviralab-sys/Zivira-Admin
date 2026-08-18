@@ -1,5 +1,4 @@
 "use client";
-
 // admin-home-dashboard.tsx
 // REPLACE the existing file entirely.
 //
@@ -19,17 +18,14 @@
 // Charts (DCR Trend, Attendance Split, metrics) still use the derived-seed
 // approach because real historical rollup endpoints don't exist yet — they
 // will update to live data in the next backend sprint.
-
-import { Bell, CalendarDays, Check, ChevronDown, Download, Eye, Pencil, Phone, Plus, RefreshCw, Target, UserRound, Users, X } from "lucide-react";
+import { Bell, CalendarDays, Check, ChevronDown, Download, Eye, Pencil, Phone, RefreshCw, Target, UserRound, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiClient, getApiBaseUrl, getToken } from "@/lib/api-client";
 import { downloadCsv } from "@/lib/download-csv";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
-
 type FieldForceRow = {
   employeeCode: string;
   name: string;
@@ -40,7 +36,6 @@ type FieldForceRow = {
   callsToday: number;
   lastSeenAt: string | null;
 };
-
 type Notice = {
   id: string;
   title: string;
@@ -49,59 +44,46 @@ type Notice = {
   priority: "NORMAL" | "URGENT";
   createdAt: string;
 };
-
 type ActivityItem = {
   tone: "teal" | "amber" | "blue" | "violet";
   title: string;
   time: string;
 };
-
 // ─── Constants ────────────────────────────────────────────────────────────────
-
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const currentYear = new Date().getFullYear();
 const yearOptions = Array.from({ length: currentYear - 2016 + 1 }, (_, i) => String(currentYear - i));
-
 type SelectOption = { label: string; value: string };
-
 // ─── Small helpers ────────────────────────────────────────────────────────────
-
 function valueFromCode(code: string, offset: number, min: number, max: number) {
   const total = [...code].reduce((sum, char) => sum + char.charCodeAt(0), offset);
   return min + (total % (max - min + 1));
 }
-
 function formatTime(isoString: string | null): string {
   if (!isoString) return "--";
   const d = new Date(isoString);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
-
 function todayLabel(): string {
   const d = new Date();
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
-
 function relativeTime(isoString: string): string {
   const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
   if (diff < 1) return "just now";
   if (diff < 60) return `${diff} min ago`;
   return `${Math.floor(diff / 60)}h ago`;
 }
-
 // ─── UI atoms ─────────────────────────────────────────────────────────────────
-
 function StatusPill({ tone, children }: { tone: "success" | "warning" | "danger" | "neutral"; children: ReactNode }) {
   return <span className={`command-pill command-pill-${tone}`}>{children}</span>;
 }
-
 function dcrTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "SUBMITTED" || status === "MANAGER_APPROVED" || status === "APPROVED") return "success";
   if (status === "PENDING") return "warning";
   if (status === "NOT_SUBMITTED") return "danger";
   return "neutral";
 }
-
 function CommandMetric({ label, value, helper, tone, icon }: {
   label: string; value: string; helper: string;
   tone: "violet" | "teal" | "amber" | "blue" | "purple"; icon: ReactNode;
@@ -118,7 +100,6 @@ function CommandMetric({ label, value, helper, tone, icon }: {
     </article>
   );
 }
-
 function CommandSelect({ id, options, value, onChange, openMenu, setOpenMenu, compact = false }: {
   id: string; options: SelectOption[]; value: string;
   onChange: (v: string) => void; openMenu: string | null;
@@ -150,7 +131,6 @@ function CommandSelect({ id, options, value, onChange, openMenu, setOpenMenu, co
     </div>
   );
 }
-
 function WeeklyTrend({ rows }: { rows: Array<{ label: string; value: number }> }) {
   const max = Math.max(...rows.map((r) => r.value), 1);
   const min = Math.min(...rows.map((r) => r.value), 0);
@@ -198,7 +178,6 @@ function WeeklyTrend({ rows }: { rows: Array<{ label: string; value: number }> }
     </div>
   );
 }
-
 function AttendanceSplit({ value }: { value: number }) {
   const leave = 100 - value;
   return (
@@ -213,9 +192,7 @@ function AttendanceSplit({ value }: { value: number }) {
     </div>
   );
 }
-
 // ─── Post-Notice modal ────────────────────────────────────────────────────────
-
 function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted: (notice: Notice) => void }) {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -223,7 +200,6 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
   const [priority, setPriority] = useState<"NORMAL" | "URGENT">("NORMAL");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
   async function handlePost() {
     if (!title.trim() || !message.trim()) {
       setError("Title and message are required.");
@@ -257,7 +233,6 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
       setSaving(false);
     }
   }
-
   return (
     <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div className="card" style={{ width: "100%", maxWidth: 480, padding: 24, position: "relative" }}>
@@ -267,9 +242,7 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
             <X size={18} />
           </button>
         </div>
-
         {error ? <p className="form-error" style={{ marginBottom: 12 }}>{error}</p> : null}
-
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, fontWeight: 500 }}>
             Title *
@@ -282,7 +255,6 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
               value={title}
             />
           </label>
-
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, fontWeight: 500 }}>
             Message *
             <textarea
@@ -295,7 +267,6 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
               value={message}
             />
           </label>
-
           <div style={{ display: "flex", gap: 12 }}>
             <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, fontSize: 13, fontWeight: 500 }}>
               Audience
@@ -314,7 +285,6 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
               </select>
             </label>
           </div>
-
           <button
             className="button"
             disabled={saving}
@@ -329,28 +299,22 @@ function PostNoticeModal({ onClose, onPosted }: { onClose: () => void; onPosted:
     </div>
   );
 }
-
 // ─── Main component ───────────────────────────────────────────────────────────
-
 export function AdminHomeDashboard() {
   const router = useRouter();
-
   // Filters
   const [employeeCode, setEmployeeCode] = useState("admin");
   const [month, setMonth] = useState(months[new Date().getMonth()] ?? "Apr");
   const [year, setYear] = useState(String(currentYear));
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-
   // Live data
   const [fieldForceRows, setFieldForceRows] = useState<FieldForceRow[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   // UI state
   const [showNoticeModal, setShowNoticeModal] = useState(false);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -366,7 +330,6 @@ export function AdminHomeDashboard() {
         const ffPayload = await ffRes.json() as { data: FieldForceRow[] };
         setFieldForceRows(ffPayload.data);
       }
-
       // 2. Notices
       const noticeRes = await fetch(
         `${getApiBaseUrl()}/company/notices`,
@@ -378,7 +341,6 @@ export function AdminHomeDashboard() {
         const noticePayload = await noticeRes.json() as { data: Notice[] };
         setNotices(noticePayload.data.slice(0, 5));
       }
-
       // 3. Activity feed — derive from last 4 DCRs using existing endpoint
       const dcrData = await apiClient.dcrs();
       const recent = dcrData.data.slice(0, 4);
@@ -396,19 +358,15 @@ export function AdminHomeDashboard() {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     void loadData();
   }, [loadData]);
-
   // Chart seed from selected employee
   const chartSeed = employeeCode === "admin" ? "admin" : employeeCode;
-
   const dcrTrend = useMemo(() => [
     { label: "W1", value: 72 }, { label: "W2", value: 78 }, { label: "W3", value: 85 },
     { label: "W4", value: 81 }, { label: "W5", value: 88 }, { label: "W6", value: 91 }
   ], []);
-
   const fieldWorkDays = useMemo(() => [
     { label: "ABM", value: valueFromCode(chartSeed, 1, 18, 25) },
     { label: "BE",  value: valueFromCode(chartSeed, 2, 19, 26) },
@@ -416,55 +374,44 @@ export function AdminHomeDashboard() {
     { label: "SM",  value: valueFromCode(chartSeed, 4, 15, 25) },
     { label: "ZBM", value: valueFromCode(chartSeed, 5, 16, 25) }
   ], [chartSeed]);
-
   const callAverage = useMemo(() => [
     { label: "ABM", value: valueFromCode(chartSeed, 7, 5, 10) },
     { label: "BE",  value: valueFromCode(chartSeed, 8, 4, 10) },
     { label: "RBM", value: valueFromCode(chartSeed, 10, 5, 10) }
   ], [chartSeed]);
-
   const callAdherence = useMemo(() => [
     { label: "CORE",   value: valueFromCode(chartSeed, 12, 48, 82) },
     { label: "N CORE", value: valueFromCode(chartSeed, 13, 42, 70) }
   ], [chartSeed]);
-
   const productDetailed = useMemo(() =>
     ["BEP","BRI","DEN","DRO","GEL","ENV","FOM","HYN","LOT","MAC"].map((label, i) => ({
       label, value: valueFromCode(chartSeed, i + 20, 500, 3200)
     })), [chartSeed]);
-
   const visitCalls = useMemo(() => [
     { label: "1 Visit",  value: valueFromCode(chartSeed, 30, 18, 42) },
     { label: "2 Visit",  value: valueFromCode(chartSeed, 31, 24, 58) },
     { label: "3 Visit",  value: valueFromCode(chartSeed, 32, 30, 66) },
     { label: "3+ Visit", value: valueFromCode(chartSeed, 33, 12, 38) }
   ], [chartSeed]);
-
   const fieldWorkTotal   = fieldWorkDays[0]?.value ?? 0;
   const callAverageValue = (callAverage.reduce((s, r) => s + r.value, 0) / Math.max(callAverage.length, 1)).toFixed(1);
   const adherenceValue   = callAdherence[0]?.value ?? 0;
   const detailedDoctors  = productDetailed.reduce((s, r) => s + r.value, 0);
   const totalVisits      = visitCalls.reduce((s, r) => s + r.value, 0) * 24;
-
   const employeeOptions = useMemo<SelectOption[]>(() => [
     { label: "All Field Force", value: "admin" },
     ...fieldForceRows.map((r) => ({ label: `${r.employeeCode} | ${r.name}`, value: r.employeeCode }))
   ], [fieldForceRows]);
-
   const monthOptions  = useMemo(() => months.map((m) => ({ label: m, value: m })), []);
   const yearSelectOpt = useMemo(() => yearOptions.map((y) => ({ label: y, value: y })), []);
-
   // Delayed DCRs = rows where dcrStatus is NOT_SUBMITTED
   const delayedRows = fieldForceRows.filter((r) => r.dcrStatus === "NOT_SUBMITTED");
-
   function viewEmployee(code: string) {
     router.push(`/admin/fieldforce/${code}?month=${month}&year=${year}`);
   }
-
   function editEmployee(code: string) {
     router.push(`/admin/fieldforce/${code}?month=${month}&year=${year}&edit=1`);
   }
-
   function handleExport() {
     const rows = fieldForceRows.map((r) => ({
       "Employee Code": r.employeeCode,
@@ -478,7 +425,6 @@ export function AdminHomeDashboard() {
     }));
     downloadCsv(`field-force-status-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   }
-
   return (
     <div className="admin-dashboard command-dashboard">
       {showNoticeModal ? (
@@ -487,7 +433,6 @@ export function AdminHomeDashboard() {
           onPosted={(notice) => setNotices((prev) => [notice, ...prev].slice(0, 5))}
         />
       ) : null}
-
       {/* ── Toolbar ── */}
       <section className="command-toolbar">
         <div>
@@ -508,9 +453,7 @@ export function AdminHomeDashboard() {
           </button>
         </div>
       </section>
-
       {error ? <p className="form-error">{error}</p> : null}
-
       {/* ── Metric cards ── */}
       <section className="command-metrics">
         <CommandMetric label="Field Work Days"   value={String(fieldWorkTotal)}           helper="From field force data"       tone="violet" icon={<CalendarDays size={18} />} />
@@ -519,7 +462,6 @@ export function AdminHomeDashboard() {
         <CommandMetric label="Drs Detailed"      value={detailedDoctors.toLocaleString()} helper="Detailed this month"         tone="blue"   icon={<UserRound size={18} />} />
         <CommandMetric label="Visit Calls (Team)" value={totalVisits.toLocaleString()}    helper="8.2% vs last month"          tone="purple" icon={<Users size={18} />} />
       </section>
-
       {/* ── Charts row ── */}
       <section className="command-insights">
         <article className="command-panel command-panel-wide">
@@ -543,8 +485,8 @@ export function AdminHomeDashboard() {
           </div>
           <div className="activity-feed">
             {activity.length > 0
-              ? activity.map((item) => (
-                  <div className="activity-item" key={item.title + item.time}>
+              ? activity.map((item, index) => (
+                  <div className="activity-item" key={item.title + item.time + index}>
                     <i className={`activity-dot activity-dot-${item.tone}`} />
                     <div>
                       <strong>{item.title}</strong>
@@ -558,7 +500,6 @@ export function AdminHomeDashboard() {
           </div>
         </article>
       </section>
-
       {/* ── Field Force Status table ── */}
       <section className="command-panel command-table-panel">
         <div className="command-table-head">
@@ -575,7 +516,7 @@ export function AdminHomeDashboard() {
             </button>
             {/* Add Field Force navigates to existing employee manager page */}
             <button className="button" onClick={() => router.push("/admin/fieldforce/new")} type="button">
-              <Plus size={15} /> Add Field Force
+               Add Field Force
             </button>
           </div>
         </div>
@@ -635,7 +576,6 @@ export function AdminHomeDashboard() {
           )}
         </div>
       </section>
-
       {/* ── Bottom grid: Notice Board + Delayed DCRs ── */}
       <section className="command-bottom-grid">
         <article className="command-panel">
@@ -643,7 +583,7 @@ export function AdminHomeDashboard() {
             <h4>Notice Board</h4>
             {/* ✅ Task 3: Post Notice button opens real form */}
             <button className="button" onClick={() => setShowNoticeModal(true)} type="button">
-              <Plus size={15} /> Post Notice
+               Post Notice
             </button>
           </div>
           <div className="notice-list">
@@ -665,7 +605,6 @@ export function AdminHomeDashboard() {
                 )}
           </div>
         </article>
-
         <article className="command-panel">
           <div className="command-table-head">
             <h4>Delayed DCR Summary</h4>

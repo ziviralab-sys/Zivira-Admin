@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 
 type InputRow = {
@@ -136,7 +136,7 @@ export function InputMaster() {
           <p>Create and manage promotional inputs and gifts for the field force.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Input</button>
         </div>
       </div>
@@ -422,7 +422,7 @@ export function InputMaster() {
                 )}
               </th>
               <th>Edit</th>
-              <th>Deactivate</th>
+              <th>Inactive</th>
             </tr>
           </thead>
           <tbody>
@@ -452,7 +452,7 @@ export function InputMaster() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button" disabled={row.status === "Inactive"}>
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

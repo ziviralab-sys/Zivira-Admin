@@ -1,9 +1,9 @@
 "use client";
-
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
+import { RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
-
 type HospitalRow = {
   id: string;
   code: string;
@@ -13,23 +13,18 @@ type HospitalRow = {
   mr: string;
   status: "Active" | "Inactive";
 };
-
 const initialHospitals: HospitalRow[] = [];
-
 export function HospitalMaster() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add" | "edit">("list");
   const [activeFormTab, setActiveFormTab] = useState<number>(1);
   const [search, setSearch] = useState("");
   const [selectedHospital, setSelectedHospital] = useState<any | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     fetchData();
   }, []);
-
   async function fetchData() {
     try {
       setLoading(true);
@@ -41,7 +36,6 @@ export function HospitalMaster() {
       setLoading(false);
     }
   }
-
   // Form State
   const [form, setForm] = useState({
     code: "",
@@ -50,34 +44,27 @@ export function HospitalMaster() {
     city: "Chennai",
     mr: "Rahul Sharma",
     status: "Active" as "Active" | "Inactive",
-
     // Address
     address: "",
     area: "",
     state: "Tamil Nadu",
     pinCode: "",
-
     // Territory Mapping
     patch: "T. Nagar",
     hq: "Chennai Central HQ",
-
     // Department & Doctor Mapping
     departments: "Ophthalmology, Cardiology",
     mappedDoctors: "Dr. Rajesh Kumar, Dr. Sandeep Sen",
-
     // Contact Details
     contactPerson: "",
     mobile: "",
     email: "",
-
     // Business Info
     gstin: "",
     panNo: "",
-
     // Additional Info
     remarks: ""
   });
-
   function handleAdd() {
     const nextCode = `HOS${String(list.length + 1).padStart(3, "0")}`;
     setForm({
@@ -105,7 +92,6 @@ export function HospitalMaster() {
     setActiveFormTab(1);
     setView("add");
   }
-
   function handleEdit(row: any) {
     setSelectedHospital(row);
     setForm({
@@ -133,7 +119,6 @@ export function HospitalMaster() {
     setActiveFormTab(1);
     setView("edit");
   }
-
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -161,7 +146,6 @@ export function HospitalMaster() {
       alert(err.message || "Failed to save hospital");
     }
   }
-
   async function handleDelete(id: string) {
     // mock delete for now, updating status to INACTIVE
     try {
@@ -171,24 +155,38 @@ export function HospitalMaster() {
       alert(err.message || "Failed to deactivate");
     }
   }
-
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
-
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const filtered = list.filter(x => {
-    const s = search.toLowerCase();
+    let isMatch = true;
+
+    // Status Filter
     const isActive = x.status === "ACTIVE" || x.status === "Active";
     const statusMatch = statusFilter === "All" ||
       (statusFilter === "Active" && isActive) ||
       (statusFilter === "Inactive" && !isActive);
       
+    if (!statusMatch) isMatch = false;
+
+    // Search Box
+    const s = search.toLowerCase();
     const nameStr = (x.hospitalName || "").toLowerCase();
     const codeStr = (x.hospitalCode || "").toLowerCase();
     const mrStr = (x.medicalRepresentative || "").toLowerCase();
+    if (s && !(nameStr.includes(s) || codeStr.includes(s) || mrStr.includes(s))) {
+        isMatch = false;
+    }
 
-    return statusMatch && (nameStr.includes(s) || codeStr.includes(s) || mrStr.includes(s));
+    // Column Filters
+    for (const [key, val] of Object.entries(columnFilters)) {
+      if (val !== "All") {
+        const rowVal = String((x as any)[key] || "").toUpperCase();
+        if (rowVal !== val.toUpperCase()) isMatch = false;
+      }
+    }
+
+    return isMatch;
   });
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -198,11 +196,10 @@ export function HospitalMaster() {
           <p>Maintain hospital institutions and departments mapped under agent routes.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
-          <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Add Hospital</button>
+          
+          <button className="button" onClick={handleAdd} type="button"> Add Hospital</button>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by name, code or MR..."
@@ -211,7 +208,6 @@ export function HospitalMaster() {
           style={{ width: "100%", maxWidth: "360px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "14px", outline: "none" }}
         />
       </div>
-
       {view !== "list" ? (
         <div style={{ marginTop: "16px" }}>
           {/* Tabs row */}
@@ -236,7 +232,6 @@ export function HospitalMaster() {
               </button>
             ))}
           </div>
-
           <form onSubmit={handleSave} className="card form-grid" style={{ animation: "popIn 0.3s ease-out forwards" }}>
             {activeFormTab === 1 && (
               <>
@@ -273,7 +268,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 2 && (
               <>
                 <div className="field">
@@ -294,7 +288,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 3 && (
               <>
                 <div className="field">
@@ -311,7 +304,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 4 && (
               <>
                 <div className="field">
@@ -324,7 +316,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 5 && (
               <>
                 <div className="field">
@@ -341,7 +332,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 6 && (
               <>
                 <div className="field">
@@ -354,7 +344,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             {activeFormTab === 7 && (
               <>
                 <div className="field">
@@ -363,7 +352,6 @@ export function HospitalMaster() {
                 </div>
               </>
             )}
-
             <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
               {activeFormTab < 7 ? (
                 <button className="button button-secondary" type="button" onClick={() => setActiveFormTab(prev => prev + 1)}>
@@ -371,7 +359,7 @@ export function HospitalMaster() {
                 </button>
               ) : (
                 <button className="button" type="submit">
-                  <Check size={16} /> Add Hospital
+                  Add Hospital
                 </button>
               )}
             </div>
@@ -389,98 +377,44 @@ export function HospitalMaster() {
                 <tr>
                   <th>S.No</th>
                   <th>Hospital Code</th>
-                  <th>Hospital Name</th>
-                  <th>Type</th>
-                  <th>City</th>
-                  <th>Medical Representative</th>
-                  <th style={{ minWidth: "130px", position: "relative" }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      <span>Status</span>
-                      <button
-                        type="button"
-                        onClick={() => setStatusFilterOpen(!statusFilterOpen)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "var(--muted)",
-                          cursor: "pointer",
-                          padding: "2px",
-                          display: "flex",
-                          alignItems: "center"
-                        }}
-                      >
-                        <ChevronDown size={14} />
-                      </button>
+                  <th>
+                    <div style={{ minWidth: "140px" }}>
+                      <ColumnFilterDropdown 
+                        title="Hospital Name" 
+                        value={columnFilters['hospitalName'] || "All"} 
+                        options={Array.from(new Set(list.map(r => String(r.hospitalName || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                        onChange={(val) => setColumnFilters(prev => ({ ...prev, hospitalName: val }))} 
+                      />
                     </div>
-                    {statusFilterOpen && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "100%",
-                          right: 0,
-                          background: "var(--panel)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "6px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                          zIndex: 10,
-                          minWidth: "110px",
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "4px 0"
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => { setStatusFilter("Active"); setStatusFilterOpen(false); }}
-                          style={{
-                            padding: "6px 12px",
-                            textAlign: "left",
-                            background: statusFilter === "Active" ? "var(--line)" : "none",
-                            border: "none",
-                            color: "var(--ink)",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            fontWeight: statusFilter === "Active" ? 600 : 400
-                          }}
-                        >
-                          Active
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setStatusFilter("Inactive"); setStatusFilterOpen(false); }}
-                          style={{
-                            padding: "6px 12px",
-                            textAlign: "left",
-                            background: statusFilter === "Inactive" ? "var(--line)" : "none",
-                            border: "none",
-                            color: "var(--ink)",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            fontWeight: statusFilter === "Inactive" ? 600 : 400
-                          }}
-                        >
-                          Inactive
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { setStatusFilter("All"); setStatusFilterOpen(false); }}
-                          style={{
-                            padding: "6px 12px",
-                            textAlign: "left",
-                            borderTop: "1px solid var(--border)",
-                            background: "none",
-                            color: "var(--muted)",
-                            fontSize: "11px",
-                            cursor: "pointer"
-                          }}
-                        >
-                          Clear Filter
-                        </button>
-                      </div>
-                    )}
+                  </th>
+                  <th>
+                    <div style={{ minWidth: "140px" }}>
+                      <ColumnFilterDropdown 
+                        title="Type" 
+                        value={columnFilters['type'] || "All"} 
+                        options={Array.from(new Set(list.map(r => String(r.type || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                        onChange={(val) => setColumnFilters(prev => ({ ...prev, type: val }))} 
+                      />
+                    </div>
+                  </th>
+                  <th>
+                    <div style={{ minWidth: "140px" }}>
+                      <ColumnFilterDropdown 
+                        title="City" 
+                        value={columnFilters['city'] || "All"} 
+                        options={Array.from(new Set(list.map(r => String(r.city || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
+                        onChange={(val) => setColumnFilters(prev => ({ ...prev, city: val }))} 
+                      />
+                    </div>
+                  </th>
+                  <th>Medical Representative</th>
+                  <th>
+                    <div style={{ minWidth: "140px" }}>
+                      <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
+                    </div>
                   </th>
                   <th>Edit</th>
-                  <th>Deactivate</th>
+                  <th>Inactive</th>
                 </tr>
               </thead>
               <tbody>
@@ -512,7 +446,7 @@ export function HospitalMaster() {
                     </td>
                     <td>
                       <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                        <Trash2 size={15} />
+                        <Ban />
                       </button>
                     </td>
                   </tr>

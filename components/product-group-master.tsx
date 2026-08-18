@@ -1,9 +1,7 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown } from "lucide-react";
+import { Pencil, RotateCcw, SlidersHorizontal, Trash2, X, ChevronDown, Ban } from "lucide-react";
 import { apiClient, type ProductGroup, type ProductCategory } from "@/lib/api-client";
-
 type FormRow = {
   id: string;
   moleculeName: string;
@@ -11,7 +9,6 @@ type FormRow = {
   description: string;
   status: "ACTIVE" | "INACTIVE";
 };
-
 const emptyFormRow: FormRow = {
   id: "",
   moleculeName: "",
@@ -19,7 +16,6 @@ const emptyFormRow: FormRow = {
   description: "",
   status: "ACTIVE"
 };
-
 export function ProductGroupMaster() {
   const [molecules, setMolecules] = useState<ProductGroup[]>([]);
   const [therapies, setTherapies] = useState<ProductCategory[]>([]);
@@ -28,7 +24,6 @@ export function ProductGroupMaster() {
   const [formRow, setFormRow] = useState<FormRow>(emptyFormRow);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -50,10 +45,8 @@ export function ProductGroupMaster() {
     }
     loadData();
   }, []);
-
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
-
   const filtered = molecules.filter(
     (m) =>
       (statusFilter === "All" ||
@@ -62,7 +55,6 @@ export function ProductGroupMaster() {
       (m.moleculeName.toLowerCase().includes(search.toLowerCase()) ||
         (m.therapyName ?? "").toLowerCase().includes(search.toLowerCase()))
   );
-
   function handleAdd() {
     setFormRow({
       ...emptyFormRow,
@@ -70,7 +62,6 @@ export function ProductGroupMaster() {
     });
     setView("add");
   }
-
   function handleEdit(row: ProductGroup) {
     setFormRow({
       id: row.id,
@@ -81,10 +72,8 @@ export function ProductGroupMaster() {
     });
     setView("edit");
   }
-
   function handleSave() {
     if (!formRow.moleculeName.trim()) return;
-
     if (view === "add") {
       const newMol: ProductGroup = {
         id: Math.random().toString(36).slice(2, 9),
@@ -111,13 +100,11 @@ export function ProductGroupMaster() {
     }
     setView("list");
   }
-
   function handleDeactivate(id: string) {
     setMolecules(
       molecules.map((m) => (m.id === id ? { ...m, status: "INACTIVE" as const } : m))
     );
   }
-
   if (view === "add" || view === "edit") {
     return (
       <section className="subdivision-console">
@@ -174,13 +161,12 @@ export function ProductGroupMaster() {
             </select>
           </label>
           <button className="button" style={{ marginTop: "12px" }} onClick={handleSave} type="button" disabled={!formRow.moleculeName.trim()}>
-            <Check size={16} /> Add Molecule
+            Add Molecule
           </button>
         </div>
       </section>
     );
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -194,13 +180,11 @@ export function ProductGroupMaster() {
             <SlidersHorizontal size={16} /> Filters
           </button>
           <button className="button" onClick={handleAdd} type="button">
-            <Plus size={16} /> Add Molecule
+             Add Molecule
           </button>
         </div>
       </div>
-
       {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by molecule name or therapy..."
@@ -217,7 +201,6 @@ export function ProductGroupMaster() {
           }}
         />
       </div>
-
       <div className="subdivision-stats" style={{ marginBottom: "20px" }}>
         <article>
           <span>Total Molecules</span>
@@ -228,7 +211,6 @@ export function ProductGroupMaster() {
           <strong>{filtered.length}</strong>
         </article>
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
         <table className="subdivision-table">
           <thead>
@@ -324,7 +306,7 @@ export function ProductGroupMaster() {
                 )}
               </th>
               <th>Edit</th>
-              <th>Deactivate</th>
+              <th>Inactive</th>
             </tr>
           </thead>
           <tbody>
@@ -367,7 +349,7 @@ export function ProductGroupMaster() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} title="Deactivate" type="button" disabled={row.status === "INACTIVE"}>
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

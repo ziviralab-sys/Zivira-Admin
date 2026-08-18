@@ -1,21 +1,16 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import { apiClient, type Expense, type Sfc } from "@/lib/api-client";
-
 export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTab?: string; embed?: boolean }) {
   // Tabs state for the embedded view (tables mode)
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [sfcRows, setSfcRows] = useState<Sfc[]>([]);
   const [expenseRows, setExpenseRows] = useState<Expense[]>([]);
-
   useEffect(() => {
     if (!embed) return;
     apiClient.sfc().then(res => setSfcRows(res.data)).catch(() => setSfcRows([]));
     apiClient.expenses().then(res => setExpenseRows(res.data)).catch(() => setExpenseRows([]));
   }, [embed]);
-
   // Left Column States (for policy form mode)
   const [remarksAvailable, setRemarksAvailable] = useState("");
   const [rowWiseChanges, setRowWiseChanges] = useState("");
@@ -24,16 +19,13 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
   const [lastDayOsWork, setLastDayOsWork] = useState("");
   const [singleDayOsWork, setSingleDayOsWork] = useState("");
   const [mgrExpenses, setMgrExpenses] = useState([{ designation: "", mode: "" }]);
-
   // Right Column States (for policy form mode)
   const [rangeFrom, setRangeFrom] = useState("1");
   const [rangeTo, setRangeTo] = useState("10");
   const [sameDayPolicy, setSameDayPolicy] = useState("");
   const [osWorkConsider, setOsWorkConsider] = useState("");
   const [additionalExpenseNeeded, setAdditionalExpenseNeeded] = useState("");
-
   const rangeNumbers = Array.from({ length: 31 }, (_, i) => String(i + 1));
-
   // Helper function to deselect/clear radio button if clicked again
   const toggleRadio = (currentVal: string, clickedVal: string, setter: (val: string) => void) => {
     if (currentVal === clickedVal) {
@@ -42,7 +34,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
       setter(clickedVal);
     }
   };
-
   // If embedded, render the original tabbed tables
   if (embed) {
     return (
@@ -65,12 +56,11 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
             </button>
           ))}
         </div>
-
         {activeTab === "sfc" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
               <h3 style={{ fontSize: "15px", fontWeight: 700 }}>SFC Routes</h3>
-              <button className="button button-compact"><Plus size={14} /> Add Route</button>
+              <button className="button button-compact"> Add Route</button>
             </div>
             <div className="subdivision-table-card">
               <table className="subdivision-table">
@@ -97,12 +87,11 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
             </div>
           </div>
         )}
-
         {activeTab === "allowance" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
               <h3 style={{ fontSize: "15px", fontWeight: 700 }}>Allowance Matrix</h3>
-              <button className="button button-compact"><Plus size={14} /> Add Allowance</button>
+              <button className="button button-compact"> Add Allowance</button>
             </div>
             <div className="subdivision-table-card">
               <table className="subdivision-table">
@@ -129,7 +118,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
             </div>
           </div>
         )}
-
         {activeTab === "worktype" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
@@ -154,7 +142,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
             </div>
           </div>
         )}
-
         {activeTab === "fixedvar" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
@@ -194,7 +181,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
       </>
     );
   }
-
   // If not embedded, render the Policy Configuration Form (Lines removed, click to deselect enabled)
   return (
     <section className="subdivision-console">
@@ -206,14 +192,11 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
           <p>Configure SFC routes, allowance categories, and parameters.</p>
         </div>
       </div>
-
       {/* Main Settings Form Panel */}
       <div className="card" style={{ padding: "28px", background: "var(--panel)", borderRadius: "12px", border: "1px solid var(--border)" }}>
         <form onSubmit={(e) => e.preventDefault()} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "40px" }}>
-          
           {/* Left Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            
             {/* 1. Manager Approval (Only Remarks Available) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -244,7 +227,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 2. Manager Approval (Row Wise Changes) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -275,7 +257,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 3. Manager Approval (Same as Admin) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -306,7 +287,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 4. Expense Submission Based on */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -348,7 +328,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 5. Last Day 'OS' Work Consider as */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -379,7 +358,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 6. Single Day 'OS' Work Consider as */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -410,25 +388,40 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
+            {/* Mgr Expense Setup */}
             {/* Mgr Expense Setup */}
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", borderBottom: "2px solid #9d174d", width: "fit-content", paddingBottom: "2px" }}>
                 Mgr Expense Setup
               </label>
-              
               <div style={{ display: "grid", gridTemplateColumns: "180px 140px 100px", gap: "12px", fontSize: "13px", fontWeight: 700, color: "var(--ink)", marginTop: "4px" }}>
                 <div>Designation</div>
                 <div>Mode</div>
                 <div style={{ textAlign: "center" }}>Add/Del</div>
               </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {[
+                  "BH", "RBM", "ABM", "ZBM", "BRM", "NBM", "Sr ABM", "MH", "SM"
+                ].map((designation) => (
+                  <div key={designation} style={{ display: "grid", gridTemplateColumns: "180px 140px 100px", gap: "12px", alignItems: "center" }}>
+                    <select style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--line)", background: "var(--panel)", fontSize: "13px", color: "var(--ink)", outline: "none" }}>
+                      <option>{designation}</option>
+                    </select>
+                    <select style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--line)", background: "var(--panel)", fontSize: "13px", color: "var(--ink)", outline: "none" }}>
+                      <option>Manual</option>
+                      <option>Automatic</option>
+                    </select>
+                    <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                      <button type="button" style={{ width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--line)", background: "var(--panel)", borderRadius: "4px", cursor: "pointer", fontSize: "14px", color: "var(--ink)" }}>+</button>
+                      <button type="button" style={{ width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--line)", background: "var(--panel)", borderRadius: "4px", cursor: "pointer", fontSize: "14px", color: "var(--ink)" }}>-</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-
           </div>
-
           {/* Right Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            
             {/* 1. Expense Submission Range */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -454,7 +447,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                     <option key={num} value={num}>{num}</option>
                   ))}
                 </select>
-
                 <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--ink)" }}>To</span>
                 <select
                   value={rangeTo}
@@ -476,14 +468,12 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </select>
               </div>
             </div>
-
             {/* 2. If Fieldforce Covers HQ & EX on the Same Day */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
                 If Fieldforce Covers HQ & EX on the Same Day, Can We take the Allowance & Fare as Below:
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px", paddingLeft: "10px" }}>
-                
                 {/* Policy I */}
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--ink)", cursor: "pointer", fontWeight: 600 }}>
                   <input
@@ -496,7 +486,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   />
                   I. HQ (No Fare)
                 </label>
-
                 {/* Policy II */}
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--ink)", cursor: "pointer", fontWeight: 600 }}>
                   <input
@@ -509,11 +498,9 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   />
                   II. EX & Actual Fare
                 </label>
-
                 {/* Policy III Section */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingLeft: "24px" }}>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)" }}>III. Maximum Calls</span>
-                  
                   <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--muted)", cursor: "pointer", fontWeight: 500 }}>
                     <input
                       type="radio"
@@ -525,7 +512,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                     />
                     HQ Allowance / No Fare
                   </label>
-
                   <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--muted)", cursor: "pointer", fontWeight: 500 }}>
                     <input
                       type="radio"
@@ -537,7 +523,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                     />
                     HQ Allowance / With Fare
                   </label>
-
                   <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--muted)", cursor: "pointer", fontWeight: 500 }}>
                     <input
                       type="radio"
@@ -550,7 +535,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                     EX Allowance / With Fare
                   </label>
                 </div>
-
                 {/* Policy IV */}
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--ink)", cursor: "pointer", fontWeight: 600 }}>
                   <input
@@ -563,10 +547,8 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                   />
                   IV. Ex Calls will have Minimum
                 </label>
-
               </div>
             </div>
-
             {/* 3. 'OS' Work Consider as */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -597,7 +579,6 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
             {/* 4. Row wise Additional Expense 'Text box' */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", fontWeight: 700, color: "#9d174d", paddingBottom: "2px" }}>
@@ -628,9 +609,7 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
                 </label>
               </div>
             </div>
-
           </div>
-
         </form>
       </div>
     </section>

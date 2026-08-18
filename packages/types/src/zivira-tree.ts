@@ -117,7 +117,6 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
           node("Mapping", "campaign", "division"),
           node("Additional Information", "chemists-class", "division"),
           node("Stockist Master", "stockist-master", "division"),
-          node("Stockist Mapping", "stockist-mapping", "division"),
           node("Chemist Master", "qualification", "division"),
           node("Chemist Mapping", "chemist-mapping", "division"),
           node("Listed Doctor", "listed-doctor", "division"),

@@ -1,8 +1,6 @@
 "use client";
-
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
-
 type PersonalViewRow = {
   id: string;
   code: string;
@@ -13,19 +11,15 @@ type PersonalViewRow = {
   aadharNo: string;
   status: "Active" | "Inactive";
 };
-
 const initialPersonalViews: PersonalViewRow[] = [];
-
 export function PersonalInformationView() {
   const [list] = useState<PersonalViewRow[]>(initialPersonalViews);
   const [search, setSearch] = useState("");
-
   const filtered = list.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.code.toLowerCase().includes(search.toLowerCase())
   );
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -35,7 +29,6 @@ export function PersonalInformationView() {
           <p>View consolidated personal verification details for employees.</p>
         </div>
       </div>
-
       <div style={{ marginBottom: "16px" }}>
         <input
           placeholder="Search by name or code..."
@@ -52,7 +45,6 @@ export function PersonalInformationView() {
           }}
         />
       </div>
-
       <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
         <table className="subdivision-table">
           <thead>

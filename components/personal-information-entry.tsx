@@ -1,12 +1,9 @@
 "use client";
-
-import { Check, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useState } from "react";
-
 export function PersonalInformationEntry() {
   const [activeCategory, setActiveCategory] = useState<"company" | "employee">("company");
   const [success, setSuccess] = useState(false);
-
   // Company Information State
   const [companyForm, setCompanyForm] = useState({
     companyName: "",
@@ -17,7 +14,6 @@ export function PersonalInformationEntry() {
     dlNo: "",
     panNo: ""
   });
-
   // Employee Personal Information State
   const [employeeForm, setEmployeeForm] = useState({
     employeeName: "",
@@ -33,7 +29,6 @@ export function PersonalInformationEntry() {
     accountNo: "",
     ifscCode: ""
   });
-
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSuccess(true);
@@ -65,7 +60,6 @@ export function PersonalInformationEntry() {
       });
     }
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head" style={{ marginBottom: "20px" }}>
@@ -75,7 +69,6 @@ export function PersonalInformationEntry() {
           <p>Configure company details or employee personal records.</p>
         </div>
       </div>
-
       {/* Tabs Row */}
       <div style={{ display: "flex", gap: "8px", overflowX: "auto", padding: "8px 0", marginBottom: "20px", borderBottom: "1px solid var(--border)" }}>
         <button
@@ -95,13 +88,11 @@ export function PersonalInformationEntry() {
           Employee Personal Information
         </button>
       </div>
-
       {success && (
         <p style={{ color: "#10b981", fontSize: "13px", fontWeight: 600, marginBottom: "16px" }}>
           ✓ Record saved successfully!
         </p>
       )}
-
       {activeCategory === "company" ? (
         <form className="card form-grid" onSubmit={handleSave} style={{ animation: "popIn 0.3s ease-out forwards" }}>
           <div className="field">
@@ -133,7 +124,7 @@ export function PersonalInformationEntry() {
             <input required value={companyForm.panNo} onChange={e => setCompanyForm({ ...companyForm, panNo: e.target.value })} placeholder="e.g. AABCZ1234F" />
           </div>
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <button className="button" type="submit"><Check size={15} /> Add Company Details</button>
+            <button className="button" type="submit">Add Company Details</button>
           </div>
         </form>
       ) : (
@@ -187,13 +178,12 @@ export function PersonalInformationEntry() {
             <input required value={employeeForm.ifscCode} onChange={e => setFormVal("ifscCode", e.target.value)} placeholder="e.g. HDFC0000123" />
           </div>
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
-            <button className="button" type="submit"><Check size={15} /> Add Employee Details</button>
+            <button className="button" type="submit">Add Employee Details</button>
           </div>
         </form>
       )}
     </section>
   );
-
   function setFormVal(key: keyof typeof employeeForm, val: string) {
     setEmployeeForm({ ...employeeForm, [key]: val });
   }

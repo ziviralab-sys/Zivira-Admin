@@ -120,6 +120,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
     return <GenericMasterTable masterKey="inputMaster" />;
   }
 
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/stockist-master") {
+    return <GenericMasterTable masterKey="doctorStockistCombined" />;
+  }
+
   if (pathStr.endsWith("stockist-details/stockist-master") || pathStr.endsWith("stockist-details/stockist master")) {
     return <GenericMasterTable masterKey="stockistMaster" />;
   }

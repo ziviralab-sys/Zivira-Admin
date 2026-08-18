@@ -1,7 +1,8 @@
 "use client";
 
+import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
 import type { Employee } from "@zivira/types";
-import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, Package, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, Users, X, Ban } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { apiClient, type ProductCatalogItem } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
@@ -161,7 +162,7 @@ function DeleteConfirmDialog({ name, onConfirm, onCancel }: { name: string; onCo
       <div style={{ background:"var(--panel)", borderRadius:"16px", padding:"32px 28px", maxWidth:"400px", width:"90%", boxShadow:"0 20px 60px rgba(0,0,0,0.18)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px" }}>
           <span style={{ background:"#fef2f2", borderRadius:"50%", width:"44px", height:"44px", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <Trash2 size={20} color="#ef4444" />
+            <Ban />
           </span>
           <div>
             <h3 style={{ margin:0, fontSize:"17px", fontWeight:700, color:"var(--ink)" }}>Deactivate Sub-Division?</h3>
@@ -174,7 +175,7 @@ function DeleteConfirmDialog({ name, onConfirm, onCancel }: { name: string; onCo
         <div style={{ display:"flex", gap:"10px", justifyContent:"flex-end" }}>
           <button className="button button-secondary" onClick={onCancel} type="button">Cancel</button>
           <button onClick={onConfirm} type="button" style={{ display:"flex", alignItems:"center", gap:"6px", padding:"8px 18px", borderRadius:"8px", border:"none", background:"#ef4444", color:"#fff", fontWeight:600, fontSize:"14px", cursor:"pointer" }}>
-            <Trash2 size={14} /> Yes, Deactivate
+            <Ban /> Yes, Deactivate
           </button>
         </div>
       </div>
@@ -212,7 +213,6 @@ export function SubdivisionMaster() {
   const [saving, setSaving] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [divisionFilter, setDivisionFilter] = useState<string>("All");
   const [divisionFilterOpen, setDivisionFilterOpen] = useState(false);
   const [subdivisionNameFilter, setSubdivisionNameFilter] = useState<string>("All");
@@ -371,7 +371,7 @@ export function SubdivisionMaster() {
         <div className="subdivision-head">
           <div><p className="subdivision-eyebrow">Master Setup</p><h2>Division Master</h2><p>Create and manage business divisions.</p></div>
           <div className="subdivision-actions">
-            <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+            
             <button className="button" onClick={openAddForm} type="button"><Plus size={16} /> Add Division</button>
           </div>
         </div>
@@ -530,94 +530,11 @@ export function SubdivisionMaster() {
                     </div>
                   )}
                 </th>
-                <th style={{ minWidth: "130px", position: "relative" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                    <span>Status</span>
-                    <button
-                      type="button"
-                      onClick={() => setStatusFilterOpen(!statusFilterOpen)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "var(--muted)",
-                        cursor: "pointer",
-                        padding: "2px",
-                        display: "flex",
-                        alignItems: "center"
-                      }}
-                    >
-                      <ChevronDown size={14} />
-                    </button>
-                  </div>
-                  {statusFilterOpen && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        right: 0,
-                        background: "var(--panel)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "6px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                        zIndex: 10,
-                        minWidth: "110px",
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "4px 0"
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Active"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Active" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Active" ? 600 : 400
-                        }}
-                      >
-                        Active
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("Inactive"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          background: statusFilter === "Inactive" ? "var(--line)" : "none",
-                          border: "none",
-                          color: "var(--ink)",
-                          fontSize: "12px",
-                          cursor: "pointer",
-                          fontWeight: statusFilter === "Inactive" ? 600 : 400
-                        }}
-                      >
-                        Inactive
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setStatusFilter("All"); setStatusFilterOpen(false); }}
-                        style={{
-                          padding: "6px 12px",
-                          textAlign: "left",
-                          borderTop: "1px solid var(--border)",
-                          background: "none",
-                          color: "var(--muted)",
-                          fontSize: "11px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Clear Filter
-                      </button>
-                    </div>
-                  )}
+                <th style={{ minWidth: "140px" }}>
+                  <StatusFilterDropdown value={statusFilter} onChange={setStatusFilter} />
                 </th>
                 <th>Edit</th>
-                <th>Deactivate</th>
+                <th>Inactive</th>
               </tr>
             </thead>
             <tbody>
@@ -690,7 +607,7 @@ export function SubdivisionMaster() {
                         <button className="subdivision-icon-button" onClick={() => openEditForm(row)} title="Edit" type="button"><Pencil size={15} /></button>
                       )}
                     </td>
-                    <td><button className="subdivision-danger-button" onClick={() => setDeleteTarget(row)} title="Deactivate" type="button"><Trash2 size={15} /></button></td>
+                    <td><button className="subdivision-danger-button" onClick={() => setDeleteTarget(row)} title="Deactivate" type="button"><Ban /></button></td>
                   </tr>
                 );
               })}

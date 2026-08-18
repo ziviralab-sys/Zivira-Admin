@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 
 type PatchRow = {
@@ -247,7 +247,7 @@ export function TerritoryMaster() {
           <p>Maintain territories and map Medical Representatives (MR) and Area Managers.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={handleAdd} type="button"><Plus size={16} /> Add Patch</button>
         </div>
       </div>
@@ -465,7 +465,7 @@ export function TerritoryMaster() {
                 )}
               </th>
               <th>Edit</th>
-              <th>Deactivate</th>
+              <th>Inactive</th>
             </tr>
           </thead>
           <tbody>
@@ -503,7 +503,7 @@ export function TerritoryMaster() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

@@ -1,13 +1,12 @@
 "use client";
-
 import clsx from "clsx";
 import { Bell, LogOut, Moon, PanelLeftClose, PanelLeftOpen, Search, Sun, UserCircle, X, ChevronRight, MessageSquare, AlertCircle, Info } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { BackButton } from "@/components/back-button";
 import { useEffect, useState, useRef } from "react";
 import { companyNav } from "@/lib/company-data";
 import { clearToken } from "@/lib/api-client";
-
 // Index of all searchable pages in the application
 const searchPages = [
   { title: "Dashboard Home", category: "Platform", href: "/admin/home" },
@@ -17,7 +16,6 @@ const searchPages = [
   { title: "MIS Reports", category: "Platform", href: "/admin/mis-reports" },
   { title: "Settings Options", category: "Platform", href: "/admin/options" },
   { title: "Doctor Celebrations", category: "Platform", href: "/admin/doctor-celebrations" },
-  
   // Workspace Masters
   { title: "Sub Division Master", category: "Subdivision", href: "/admin/workspace/division-dashboard/division-navigation-tabs/division-master/subdivision/entry" },
   { title: "View - Productwise", category: "Subdivision", href: "/admin/workspace/division-dashboard/division-navigation-tabs/division-master/subdivision/view-productwise" },
@@ -35,23 +33,19 @@ const searchPages = [
   { title: "Expense Master", category: "Expenses", href: "/admin/workspace/division-dashboard/division-navigation-tabs/division-master/expense" },
   { title: "Statewise Holiday Fixation", category: "Holidays", href: "/admin/workspace/division-dashboard/division-navigation-tabs/division-master/statewise-holiday-fixation" }
 ];
-
 export function CompanyShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isHolidayFixation = pathname.includes("statewise-holiday-fixation") || pathname.includes("statewise%20holiday%20fixation") || pathname.includes("statewise holiday fixation");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
   // Search & Notifications states
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; type: string; time: string }>>([]);
-
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-
   // Save/Load theme and sidebar preferences
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("zivira.admin.theme");
@@ -61,16 +55,13 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
     const savedSidebar = window.localStorage.getItem("zivira.admin.sidebar");
     if (savedSidebar === "closed") setSidebarOpen(false);
   }, []);
-
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem("zivira.admin.theme", theme);
   }, [theme]);
-
   useEffect(() => {
     window.localStorage.setItem("zivira.admin.sidebar", sidebarOpen ? "open" : "closed");
   }, [sidebarOpen]);
-
   // Load notifications (live notices + fallback alerts)
   useEffect(() => {
     async function loadNotifications() {
@@ -93,14 +84,12 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             time: new Date(notice.createdAt).toLocaleDateString()
           }));
         }
-        
         // Dynamic fallback alerts
         const staticAlerts = [
           { id: "1", title: "DCR Submitted", message: "Vijay Kumar (BE) submitted today's DCR", type: "success", time: "Just now" },
           { id: "2", title: "API Sync Completed", message: "Successfully synced with HQ Server", type: "info", time: "2 hours ago" },
           { id: "3", title: "DCR Pending Warning", message: "3 field force members haven't submitted DCR yet", type: "warning", time: "4 hours ago" }
         ];
-        
         setNotifications([...liveAlerts, ...staticAlerts]);
       } catch (e) {
         // Fallback alerts if fetch fails
@@ -111,10 +100,8 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
         ]);
       }
     }
-    
     loadNotifications();
   }, []);
-
   // Click outside to close notifications popover
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -125,7 +112,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   // Keyboard shortcut CMD/CTRL + K to open search
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -140,7 +126,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
   // Focus input when search opens
   useEffect(() => {
     if (searchOpen) {
@@ -149,23 +134,21 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
       setSearchQuery("");
     }
   }, [searchOpen]);
+  // Removed topbar logic
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
-
   function signOut() {
     clearToken();
     router.push("/admin/login");
   }
-
   const filteredPages = searchQuery
     ? searchPages.filter(p =>
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : searchPages.slice(0, 6);
-
   return (
     <div className="app-shell">
       {/* ── Search Modal ── */}
@@ -188,7 +171,7 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             onClick={(e) => e.stopPropagation()}
             style={{
               width: "100%",
-              maxWidth: "600px",
+              maxWidth: "500px",
               background: "var(--panel)",
               border: "1px solid var(--line)",
               borderRadius: "14px",
@@ -221,7 +204,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
                 <X size={18} />
               </button>
             </div>
-            
             <div style={{ padding: "8px", maxHeight: "380px", overflowY: "auto" }}>
               <p style={{ margin: "8px 12px 4px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--muted)", letterSpacing: "0.05em" }}>
                 {searchQuery ? "Matching Results" : "Recent Modules"}
@@ -266,7 +248,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-
       <aside className={clsx("sidebar", !sidebarOpen && "sidebar-collapsed")} style={{ paddingTop: 0 }}>
         <div style={{
           display: "flex",
@@ -277,8 +258,8 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
           height: "72px",
           marginLeft: sidebarOpen ? "-14px" : "-8px",
           marginRight: sidebarOpen ? "-14px" : "-8px",
-          paddingLeft: sidebarOpen ? "22px" : "16px",
-          paddingRight: sidebarOpen ? "22px" : "16px"
+          paddingLeft: sidebarOpen ? "22px" : "8px",
+          paddingRight: sidebarOpen ? "22px" : "8px"
         }}>
           <Link className="brand" href="/admin/home" style={{ borderBottom: "none", padding: 0, gap: "12px" }}>
             <span className="brand-mark">Z</span>
@@ -301,7 +282,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             </button>
           )}
         </div>
-
         <nav aria-label="Company Admin navigation">
           {companyNav.map((group) => (
             <div className="nav-group" key={group.title}>
@@ -309,7 +289,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-
                 return (
                   <Link
                     className={clsx("nav-link", active && "nav-link-active")}
@@ -325,7 +304,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             </div>
           ))}
         </nav>
-
         {sidebarOpen && (
           <div className="theme-panel">
             <p className="nav-group-title">Theme</p>
@@ -349,13 +327,11 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-
         <button className="nav-signout" onClick={signOut} type="button" title={!sidebarOpen ? "Sign out" : undefined}>
           <LogOut size={16} />
           {sidebarOpen && "Sign out"}
         </button>
       </aside>
-
       <main className="main">
         <header className="topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -373,8 +349,7 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
             <div>
               {!isHolidayFixation && (
                 <>
-                  <h1>Tenant Operations</h1>
-                  <p>Zivira Labs · platform tabs</p>
+                  <h1>Admin Module</h1>
                 </>
               )}
             </div>
@@ -400,7 +375,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
                 <span style={{ position: "absolute", top: "-2px", right: "-2px", background: "var(--brand)", width: "8px", height: "8px", borderRadius: "50%" }} />
               )}
             </button>
-
             {/* ── Notifications Popover ── */}
             {notificationsOpen && (
               <div
@@ -426,7 +400,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
                     <X size={15} />
                   </button>
                 </div>
-                
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "280px", overflowY: "auto", paddingRight: "4px" }} className="scroll-panel">
                   {notifications.map((notif) => (
                     <div
@@ -462,7 +435,6 @@ export function CompanyShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             )}
-
             <span className="badge" style={{ gap: "6px" }}>
               <UserCircle size={16} /> Admin Zivira
             </span>

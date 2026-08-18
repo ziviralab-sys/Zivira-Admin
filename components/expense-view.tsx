@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, SlidersHorizontal, Trash2, ChevronDown, Ban } from "lucide-react";
 import { useState } from "react";
 import { formatDate } from "@/lib/format-date";
 
@@ -140,7 +140,7 @@ export function ExpenseView() {
           <p>Create and track field forces business trip expenses.</p>
         </div>
         <div className="subdivision-actions">
-          <button className="button button-secondary" type="button"><SlidersHorizontal size={16} /> Filters</button>
+          
           <button className="button" onClick={() => setView("add")} type="button"><Plus size={16} /> Add Expense</button>
         </div>
       </div>
@@ -250,7 +250,7 @@ export function ExpenseView() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} type="button">
-                    <Trash2 size={15} />
+                    <Ban />
                   </button>
                 </td>
               </tr>

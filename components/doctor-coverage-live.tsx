@@ -1,18 +1,15 @@
 "use client";
-
 import type { DoctorCoverageRow } from "@zivira/types";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { downloadCsv } from "@/lib/download-csv";
 import { formatDate } from "@/lib/format-date";
-
 export function DoctorCoverageLive() {
   const [rows, setRows] = useState<DoctorCoverageRow[]>([]);
   const [threshold, setThreshold] = useState(500);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   async function load() {
     setLoading(true); setError("");
     try {
@@ -23,7 +20,6 @@ export function DoctorCoverageLive() {
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
-
   function exportCsv() {
     downloadCsv("doctor-coverage.csv", rows.map(r => ({
       DoctorName: r.doctorName, Specialty: r.specialty ?? "", AssignedMR: r.assignedMR ?? "",
@@ -32,7 +28,6 @@ export function DoctorCoverageLive() {
       OverGiftThreshold: r.overGiftThreshold ? "Yes" : "No"
     })));
   }
-
   return (
     <section className="subdivision-console">
       <div className="subdivision-head">
@@ -47,7 +42,6 @@ export function DoctorCoverageLive() {
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
-
       <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
         <table className="subdivision-table">
           <thead>

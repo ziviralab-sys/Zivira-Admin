@@ -1,22 +1,18 @@
 "use client";
-
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiClient, setToken } from "@/lib/api-client";
-
 export function LoginForm() {
   const router = useRouter();
   const [username, setUsername] = useState("adminzivira");
   const [password, setPassword] = useState("ziviramumbai");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
-
     try {
       const response = await apiClient.login(username, password);
       setToken(response.data.token);
@@ -27,7 +23,6 @@ export function LoginForm() {
       setSubmitting(false);
     }
   }
-
   return (
     <form onSubmit={handleSubmit}>
       <div className="field">
