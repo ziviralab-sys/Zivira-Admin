@@ -48,19 +48,29 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         masterKey === "targetMaster" || 
         masterKey === "primarySales" || 
         masterKey === "secondarySales" || 
-        masterKey === "claimsMaster"
+        masterKey === "claimsMaster" ||
+        masterKey === "chemistMapping"
       ) {
         const titleMap: Record<string, string> = {
           targetMaster: "Target Master",
           primarySales: "Primary Sales",
           secondarySales: "Secondary Sales",
-          claimsMaster: "Claims Master"
+          claimsMaster: "Claims Master",
+          chemistMapping: "Chemist Mapping"
+        };
+        const fieldsMap: Record<string, MasterField[]> = {
+          chemistMapping: [
+            { key: "chemistCode", label: "Chemist Code", type: "string" },
+            { key: "division", label: "Division", type: "string" },
+            { key: "products", label: "Products", type: "string" },
+            { key: "status", label: "Status", type: "string" }
+          ]
         };
         schemaData = {
           key: masterKey,
           title: titleMap[masterKey] || "Master",
-          keyFields: ["division", "zone", "region", "area", "hq", "product", "month"],
-          fields: [
+          keyFields: masterKey === "chemistMapping" ? ["chemistCode", "division", "products"] : ["division", "zone", "region", "area", "hq", "product", "month"],
+          fields: fieldsMap[masterKey] || [
             { key: "division", label: "Division", type: "string" },
             { key: "zone", label: "Zone", type: "string" },
             { key: "region", label: "Region", type: "string" },

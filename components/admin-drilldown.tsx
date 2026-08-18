@@ -108,6 +108,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
     return <GenericMasterTable masterKey="doctorMapping" />;
   }
 
+  if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/chemist-mapping") {
+    return <GenericMasterTable masterKey="chemistMapping" />;
+  }
+
   if (pathStr === "division-dashboard/division-navigation-tabs/division-master/doctor/chemists-category") {
     return <GenericMasterTable masterKey="doctorContactDetails" />;
   }
