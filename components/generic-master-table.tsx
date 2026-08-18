@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Trash2, Check, Plus, Pencil, Ban } from "lucide-react";
+import { RotateCcw, Trash2, Check, Plus, Pencil, Ban, Download } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useState, useMemo } from "react";
 import { apiClient, type MasterField, type MasterRecord, type MasterSchema } from "@/lib/api-client";
@@ -369,6 +369,31 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     }
   }
 
+  function exportToCSV() {
+    if (!schema || rows.length === 0) return;
+    const headers = schema.fields.map((f) => f.label);
+    const csvRows = filteredRows.map((row) => {
+      return schema.fields.map((f) => {
+        let val = (row as any)[f.key];
+        if (f.computed) {
+          val = computedValueFor(f, row);
+        }
+        if (val === undefined || val === null) val = "";
+        val = String(val).replace(/"/g, '""');
+        return `"${val}"`;
+      }).join(",");
+    });
+    const csvString = [headers.join(","), ...csvRows].join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${schema.title || masterKey}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <>
       {deleteTarget && (
@@ -482,6 +507,14 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
             <span>Total Records</span>
             <strong>{rows.length}</strong>
           </article>
+          <button 
+            className="button" 
+            onClick={exportToCSV} 
+            type="button" 
+            style={{ padding: "8px 16px", backgroundColor: "white", color: "var(--brand)", border: "1px solid var(--brand)", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+          >
+            <Download size={16} /> Export CSV
+          </button>
           {masterKey === "stockistMaster" && (
             <button 
               className="button" 
