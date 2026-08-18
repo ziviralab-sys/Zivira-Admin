@@ -179,7 +179,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
             
             const stockistNameIdx = schemaData.fields.findIndex((f: any) => f.label.toLowerCase() === "stockist name");
             if (stockistNameIdx !== -1) {
-              const newFields = [
+              const newFields: MasterField[] = [
                 { key: "contactNumber", label: "Contact Number", type: "string" },
                 { key: "emailAddress", label: "Email Address", type: "string" },
                 { key: "territory", label: "Territory", type: "string" },
