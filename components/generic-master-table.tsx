@@ -206,7 +206,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
 
         // Globally ensure ALL masters have a Status column AT THE VERY END
         const statusIdx = schemaData.fields.findIndex((f: any) => f.key === "status" || f.label.toUpperCase() === "STATUS");
-        let statusField = { key: "status", label: "Status", type: "string" };
+        let statusField: MasterField = { key: "status", label: "Status", type: "string" };
         if (statusIdx !== -1) {
           statusField = schemaData.fields.splice(statusIdx, 1)[0];
         }
