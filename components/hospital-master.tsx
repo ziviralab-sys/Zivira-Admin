@@ -425,7 +425,7 @@ export function HospitalMaster() {
           </form>
         </div>
       ) : (
-        <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
+        <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
           {loading ? (
             <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Loading hospitals...</div>
           ) : (

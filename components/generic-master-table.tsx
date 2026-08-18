@@ -115,7 +115,19 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
   // registry key so its keyFields/required-field checks match what this
   // view's form actually shows, instead of failing "Missing Monthly, Team"
   // on every save because the reporting-structure form never has those.
-  const effectiveMasterKey = masterKey === "expenseReports" && isReportingStructure ? "reportingStructure" : masterKey;
+  //
+  // "doctorStockistCombined" (the Doctor -> Stockist Master screen) isn't a
+  // real backend collection at all — it's a client-side merge of
+  // stockistMaster plus 4 other Stockist sub-tabs' schemas, so every save
+  // through it 404'd with "Unknown master". The fields it actually owns
+  // belong to stockistMaster; everything else is wired as a computed
+  // lookup below, so route real saves to stockistMaster.
+  const effectiveMasterKey =
+    masterKey === "expenseReports" && isReportingStructure
+      ? "reportingStructure"
+      : masterKey === "doctorStockistCombined"
+      ? "stockistMaster"
+      : masterKey;
 
   async function load() {
     setLoading(true);
@@ -125,28 +137,39 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       let rowsData: MasterRecord[] = [];
 
       if (masterKey === "doctorStockistCombined") {
-        const [smRes, addrRes, contRes, hqRes, licRes, rRes] = await Promise.all([
+        const [smRes, addrRes, contRes, hqRes, licRes, smRecords, addrRecords, contRecords, hqRecords, licRecords] = await Promise.all([
           apiClient.masterSchema("stockistMaster"),
           apiClient.masterSchema("stockistAddress"),
           apiClient.masterSchema("stockistContact"),
           apiClient.masterSchema("stockistHeadquarters"),
           apiClient.masterSchema("stockistLicenseDetails"),
-          apiClient.masterRecords("stockistMaster")
+          apiClient.masterRecords("stockistMaster"),
+          apiClient.masterRecords("stockistAddress"),
+          apiClient.masterRecords("stockistContact"),
+          apiClient.masterRecords("stockistHeadquarters"),
+          apiClient.masterRecords("stockistLicenseDetails")
         ]);
-        
-        const allFields = [
-          ...smRes.data.fields,
-          ...addrRes.data.fields,
-          ...contRes.data.fields,
-          ...hqRes.data.fields,
-          ...licRes.data.fields
-        ];
 
-        // remove duplicates by key
-        const uniqueFields: any[] = [];
+        // Only stockistMaster's own fields actually live on the
+        // stockistMaster collection. Every other sub-tab — Address/
+        // Contact/Headquarters/License — is a SEPARATE collection keyed by
+        // the same stockistCode. Rather than leave those as per-cell
+        // "computed" lookups (fragile — one stale sourceRecords fetch and
+        // every one of those columns goes blank, which is what this screen
+        // was reported showing), the records are joined into flat row
+        // objects here, once, up front — the same stockistCode key both
+        // collections already share.
         const seenKeys = new Set<string>();
-        for (const f of allFields) {
-          if (!seenKeys.has(f.key) && f.key !== "status") {
+        const uniqueFields: any[] = [];
+        for (const f of smRes.data.fields) {
+          if (f.key === "status" || seenKeys.has(f.key)) continue;
+          seenKeys.add(f.key);
+          uniqueFields.push(f);
+        }
+        const subMasterFieldLists: MasterField[][] = [addrRes.data.fields, contRes.data.fields, hqRes.data.fields, licRes.data.fields];
+        for (const fields of subMasterFieldLists) {
+          for (const f of fields) {
+            if (f.key === "status" || f.key === "stockistCode" || seenKeys.has(f.key)) continue;
             seenKeys.add(f.key);
             uniqueFields.push(f);
           }
@@ -158,7 +181,23 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
           keyFields: smRes.data.keyFields,
           fields: uniqueFields
         };
-        rowsData = rRes.data;
+
+        const byCode = <T extends MasterRecord>(records: T[]) => {
+          const map = new Map<string, T>();
+          for (const r of records) if (typeof r.stockistCode === "string") map.set(r.stockistCode, r);
+          return map;
+        };
+        const addrByCode = byCode(addrRecords.data);
+        const contByCode = byCode(contRecords.data);
+        const hqByCode = byCode(hqRecords.data);
+        const licByCode = byCode(licRecords.data);
+        rowsData = smRecords.data.map((row) => ({
+          ...(addrByCode.get(String(row.stockistCode)) ?? {}),
+          ...(contByCode.get(String(row.stockistCode)) ?? {}),
+          ...(hqByCode.get(String(row.stockistCode)) ?? {}),
+          ...(licByCode.get(String(row.stockistCode)) ?? {}),
+          ...row // stockistMaster's own fields always win over any sub-tab field with the same key
+        }));
       } else {
         const [schemaRes, recordsRes] = await Promise.all([
           apiClient.masterSchema(effectiveMasterKey),
@@ -172,7 +211,15 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         schemaData.fields = schemaData.fields.map(f => {
           if (f.label === "Doctor Name") return { ...f, label: "Customer Name" };
           if (f.label === "Doctor Category (A/B/C)") return { ...f, label: "Doctor Category" };
-          if (f.label.toUpperCase() === "ACTIVE") return { ...f, label: "Status", key: "status" };
+          // Relabel only — Doctor Classification's status-like field is
+          // stored under the key "active" (registry + seed data both use
+          // it). Renaming the *key* too, as this used to, displayed
+          // "Status" as the header but then tried to read row.status,
+          // which doesn't exist on these documents — every row showed
+          // blank. The status-ensure block further down already treats any
+          // field labeled "Status" as the master's status column
+          // regardless of its key, so the key never needed to change.
+          if (f.label.toUpperCase() === "ACTIVE") return { ...f, label: "Status" };
           return f;
         });
 
@@ -294,6 +341,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
   // Hardcoded keys for which we should hide the Edit and Inactive buttons
   const readonlyKeys = [
     "holidayStateMaster", "holidayCalendar", // Statewise - Holiday Fixation
+    "doctorStockistCombined", // read-only join across 5 Stockist collections — no single backing collection to save an edit into
     "stockistMaster", "stockistAddress", "stockistContact", "stockistHeadquarters", "stockistDivisionMapping", "stockistBankDetails", "stockistLicenseDetails", "stockistStatus", // Stockist Details
     "expenseCategory", "expenseTypes", "sfc", "allowanceFixation", // Expense Setup
     "managerTravelApproval", "expenseApproval", "expenseReports", // Manager Expense
@@ -336,12 +384,16 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         }
       }
       if (statusFilter !== "All") {
-        const rowStatus = String((row as any).status || "").toUpperCase();
+        // The status-like field isn't always literally keyed "status" (e.g.
+        // Doctor Classification stores it under "active") — resolve the
+        // real key from the schema instead of assuming.
+        const statusKey = schema?.fields.find((f) => f.label.toUpperCase() === "STATUS")?.key ?? "status";
+        const rowStatus = String((row as any)[statusKey] || "").toUpperCase();
         if (rowStatus !== statusFilter.toUpperCase()) isMatch = false;
       }
       return isMatch;
     });
-  }, [rows, columnFilters, statusFilter]);
+  }, [rows, columnFilters, statusFilter, schema]);
 
   if (!schema && loading) {
     return (
@@ -378,6 +430,17 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     return field;
   }
 
+  // Some masters' Active/Inactive field isn't literally keyed "status" —
+  // Doctor Classification's is keyed "active" — so the default-to-"Active"
+  // logic below has to recognize it by shape (a 2-option Active/Inactive
+  // dropdown), not just by key name. Without this, opening Add left the
+  // field blank instead of pre-selected, and it's easy to submit without
+  // ever noticing there was a status field to fill in.
+  function isActiveInactiveField(f: MasterField): boolean {
+    if (f.key === "status" || f.key === "active") return true;
+    return !!f.options && f.options.length === 2 && f.options.includes("Active") && f.options.includes("Inactive");
+  }
+
   async function openAddForm() {
     const codeField = autoCodeField();
     // Recompute against a fresh fetch rather than whatever `rows` happened
@@ -397,7 +460,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     }
     const blank: Record<string, unknown> = {};
     for (const f of schema!.fields) {
-      if (f.key === "status") {
+      if (isActiveInactiveField(f)) {
         blank[f.key] = "Active";
       } else if (codeField && f.key === codeField.key) {
         blank[f.key] = computeNextCode(codeField, freshRows);
@@ -426,25 +489,40 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       if (formRow.id) {
         await apiClient.updateMasterRecord(effectiveMasterKey, String(formRow.id), payload);
       } else {
-        try {
-          await apiClient.createMasterRecord(effectiveMasterKey, payload);
-        } catch (err) {
-          // The auto-suggested code can go stale if the list we computed it
-          // from wasn't the latest (another save landed in between, or two
-          // tabs are open). Rather than surface a scary "already exists"
-          // error for something the user didn't even type in themselves,
-          // re-fetch, recompute the next code once, and retry silently.
-          const codeField = autoCodeField();
-          const isCodeConflict = err instanceof Error && /already exists/i.test(err.message);
-          if (isCodeConflict && codeField && payload[codeField.key] === formRow[codeField.key]) {
-            const fresh = await apiClient.masterRecords(effectiveMasterKey);
-            const retryCode = computeNextCode(codeField, fresh.data);
-            payload[codeField.key] = retryCode;
+        const codeField = autoCodeField();
+        const originalCode = codeField ? payload[codeField.key] : undefined;
+        let lastErr: unknown = null;
+        // The auto-suggested code can go stale if the list we computed it
+        // from wasn't the latest (another save landed in between, two tabs
+        // open, etc). Rather than surface a scary "already exists" error
+        // for something the user didn't even type in themselves, re-fetch
+        // and retry with a bumped code — a few times if needed, since a
+        // single retry can still collide if several stale codes are queued
+        // up (e.g. right after a bulk import).
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
             await apiClient.createMasterRecord(effectiveMasterKey, payload);
-          } else {
-            throw err;
+            lastErr = null;
+            break;
+          } catch (err) {
+            lastErr = err;
+            const isCodeConflict = err instanceof Error && /already exists/i.test(err.message);
+            const codeIsAutoFilled = codeField && payload[codeField.key] === originalCode || (codeField && attempt > 0);
+            if (!isCodeConflict || !codeField || !codeIsAutoFilled) break;
+            const fresh = await apiClient.masterRecords(effectiveMasterKey);
+            let retryCode = computeNextCode(codeField, fresh.data);
+            // If recomputing from a fresh fetch still lands on the exact
+            // code that was just rejected, force forward progress by
+            // bumping its trailing number directly rather than repeating
+            // the same failing request.
+            if (retryCode === payload[codeField.key]) {
+              const match = String(retryCode).match(/^(.*?)(\d+)$/);
+              if (match) retryCode = `${match[1]}${String(parseInt(match[2], 10) + 1).padStart(match[2].length, "0")}`;
+            }
+            payload[codeField.key] = retryCode;
           }
         }
+        if (lastErr) throw lastErr;
       }
       // The save itself succeeded at this point — close the form regardless
       // of what happens next. Previously, a transient failure in the list

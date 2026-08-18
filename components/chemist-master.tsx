@@ -108,7 +108,11 @@ export function ChemistMaster() {
       type: "Retailer", // Defaulting as dealer doesn't have type
       city: row.city || "Chennai",
       mr: row.employeeName || row.employeeCode || "",
-      status: row.status || "ACTIVE",
+      // Backend stores "ACTIVE"/"INACTIVE" but the <select> options below
+      // are value="Active"/"Inactive" — without normalizing case here, an
+      // edited record's dropdown matched neither option and rendered blank
+      // instead of showing the record's real status.
+      status: String(row.status || "ACTIVE").toUpperCase() === "INACTIVE" ? "Inactive" : "Active",
       address: row.address || "",
       area: row.location || "",
       state: row.state || "Tamil Nadu",
@@ -424,7 +428,7 @@ export function ChemistMaster() {
           </form>
         </div>
       ) : (
-        <div className="subdivision-table-card" style={{ overflowX: "auto", paddingBottom: "120px" }}>
+        <div className="subdivision-table-card" style={{ overflowX: "auto" }}>
           {loading ? (
             <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>Loading chemists...</div>
           ) : (
