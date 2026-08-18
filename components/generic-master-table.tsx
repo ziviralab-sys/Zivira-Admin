@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
 import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
 import { CustomDatePicker } from "@/components/custom-date-picker";
+import { CustomSelect } from "@/components/custom-select";
 
 /**
  * Renders a full CRUD console (list + add/edit form) for any of the 38
@@ -454,16 +455,12 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                           style={{ ...commonStyle, background: "#f3f4f6", color: "var(--muted)", cursor: "not-allowed" }}
                         />
                       ) : opts ? (
-                        <select
+                        <CustomSelect
                           value={(formRow[f.key] as string | undefined) ?? ""}
-                          onChange={(e) => setFormRow({ ...formRow, [f.key]: e.target.value })}
-                          style={commonStyle}
-                        >
-                          <option value="">Select {f.label}</option>
-                          {opts.map((o) => (
-                            <option key={o} value={o}>{o}</option>
-                          ))}
-                        </select>
+                          options={opts}
+                          onChange={(val) => setFormRow({ ...formRow, [f.key]: val })}
+                          placeholder={`Select ${f.label}`}
+                        />
                       ) : f.type === "date" ? (
                         <CustomDatePicker
                           value={(formRow[f.key] as string) || ""}
