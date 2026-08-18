@@ -132,8 +132,7 @@ export function ChemistMaster() {
     try {
       const sourceSNo = Number(form.code.replace(/\D/g, "")) || undefined;
       if (view === "add") {
-        await apiClient.createDealer({
-          sourceSNo,
+        const dealerPayload = {
           dealerName: form.name,
           city: form.city,
           employeeName: form.mr,
@@ -146,7 +145,24 @@ export function ChemistMaster() {
           dealerPhone: form.mobile,
           dealerEmail: form.email,
           status: form.status.toUpperCase() as "ACTIVE" | "INACTIVE"
-        });
+        };
+        try {
+          await apiClient.createDealer({ sourceSNo, ...dealerPayload });
+        } catch (err: any) {
+          // Same staleness class of bug as elsewhere: recompute the next
+          // code against the live list and retry once instead of surfacing
+          // "already exists" for a code the user never typed themselves.
+          if (err?.message && /already exists/i.test(err.message)) {
+            const fresh = await apiClient.dealers();
+            const maxSNo = fresh.data.reduce((max: number, r: any) => {
+              const n = Number(r.sourceSNo);
+              return Number.isFinite(n) && n > max ? n : max;
+            }, 0);
+            await apiClient.createDealer({ sourceSNo: maxSNo + 1, ...dealerPayload });
+          } else {
+            throw err;
+          }
+        }
         await fetchData();
       } else if (view === "edit" && selectedChemist) {
         await apiClient.updateDealer(selectedChemist.id, {

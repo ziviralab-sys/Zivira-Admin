@@ -109,6 +109,14 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
   // a computed field's display value (e.g. Doctor Name from a chosen Doctor Code).
   const [sourceRecords, setSourceRecords] = useState<Record<string, MasterRecord[]>>({});
 
+  // "Reporting Structure" is a toggle on the same screen as Manager Expense
+  // — Reports, but it's backed by a genuinely different table (division's
+  // BH/ZBM/RBM/ABM/BE chain, not a monthly budget) — it has its own
+  // registry key so its keyFields/required-field checks match what this
+  // view's form actually shows, instead of failing "Missing Monthly, Team"
+  // on every save because the reporting-structure form never has those.
+  const effectiveMasterKey = masterKey === "expenseReports" && isReportingStructure ? "reportingStructure" : masterKey;
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -116,34 +124,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       let schemaData: MasterSchema;
       let rowsData: MasterRecord[] = [];
 
-      if (
-        masterKey === "targetMaster" || 
-        masterKey === "primarySales" || 
-        masterKey === "secondarySales" || 
-        masterKey === "claimsMaster"
-      ) {
-        const titleMap: Record<string, string> = {
-          targetMaster: "Target Master",
-          primarySales: "Primary Sales",
-          secondarySales: "Secondary Sales",
-          claimsMaster: "Claims Master"
-        };
-        schemaData = {
-          key: masterKey,
-          title: titleMap[masterKey] || "Master",
-          keyFields: ["division", "zone", "region", "area", "hq", "product", "month"],
-          fields: [
-            { key: "division", label: "Division", type: "string" },
-            { key: "zone", label: "Zone", type: "string" },
-            { key: "region", label: "Region", type: "string" },
-            { key: "area", label: "Area", type: "string" },
-            { key: "hq", label: "HQ", type: "string" },
-            { key: "product", label: "Product", type: "string" },
-            { key: "month", label: "Month", type: "string" },
-            { key: "status", label: "Status", type: "string" }
-          ]
-        };
-      } else if (masterKey === "doctorStockistCombined") {
+      if (masterKey === "doctorStockistCombined") {
         const [smRes, addrRes, contRes, hqRes, licRes, rRes] = await Promise.all([
           apiClient.masterSchema("stockistMaster"),
           apiClient.masterSchema("stockistAddress"),
@@ -180,8 +161,8 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         rowsData = rRes.data;
       } else {
         const [schemaRes, recordsRes] = await Promise.all([
-          apiClient.masterSchema(masterKey),
-          apiClient.masterRecords(masterKey)
+          apiClient.masterSchema(effectiveMasterKey),
+          apiClient.masterRecords(effectiveMasterKey)
         ]);
         schemaData = schemaRes.data;
         rowsData = recordsRes.data;
@@ -265,21 +246,15 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
             }
             schemaData.title = "Stockist Master";
           }
-        } else if (masterKey === "expenseReports" && isReportingStructure) {
-          schemaData.fields = [
-            { key: "division", label: "Division", type: "string" },
-            { key: "bh", label: "BH", type: "string" },
-            { key: "zbm", label: "ZBM", type: "string" },
-            { key: "rbm", label: "RBM", type: "string" },
-            { key: "abm", label: "ABM", type: "string" },
-            { key: "be", label: "BE", type: "string" }
-          ];
-          schemaData.title = "Reporting Structure";
         }
 
-        // Globally ensure ALL masters have a Status column AT THE VERY END
+        // Globally ensure ALL masters have a Status column AT THE VERY END.
+        // The fallback used to have no `options`, which rendered as a plain
+        // text box instead of an Active/Inactive dropdown for every master
+        // whose registry entry didn't already define its own status field —
+        // defaulting it here means every tab's status is always selectable.
         const statusIdx = schemaData.fields.findIndex((f: any) => f.key === "status" || f.label.toUpperCase() === "STATUS");
-        let statusField: MasterField = { key: "status", label: "Status", type: "string" };
+        let statusField: MasterField = { key: "status", label: "Status", type: "string", options: ["Active", "Inactive"] };
         if (statusIdx !== -1) {
           statusField = schemaData.fields.splice(statusIdx, 1)[0];
         }
@@ -392,17 +367,40 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     const key = schema.keyFields[0];
     const field = schema.fields.find((f) => f.key === key);
     if (!field || field.sourceMaster || field.options) return null;
+    // Only auto-fill fields that actually look like a code (e.g. "Division
+    // Code", "brandCode") — a single free-text key field like Allowance
+    // Fixation's "Location" or Expense Category's "Category" isn't a code,
+    // and auto-filling it with a made-up "L-0001"-style value only produced
+    // nonsense the user then had to notice and clear before typing the real
+    // location/category name.
+    const looksLikeCode = /code/i.test(field.key) || /code/i.test(field.label);
+    if (!looksLikeCode) return null;
     return field;
   }
 
-  function openAddForm() {
-    const blank: Record<string, unknown> = {};
+  async function openAddForm() {
     const codeField = autoCodeField();
+    // Recompute against a fresh fetch rather than whatever `rows` happened
+    // to hold from the last full page load — if the screen has been open a
+    // while, or another add landed in between, the in-memory list can be
+    // stale and suggest a code that's already taken, which is what made
+    // "Add" fail immediately on the very first try for several tabs.
+    let freshRows = rows;
+    if (codeField) {
+      try {
+        const fresh = await apiClient.masterRecords(effectiveMasterKey);
+        freshRows = fresh.data;
+        setRows(fresh.data);
+      } catch {
+        // Non-fatal — fall back to the already-loaded rows.
+      }
+    }
+    const blank: Record<string, unknown> = {};
     for (const f of schema!.fields) {
       if (f.key === "status") {
         blank[f.key] = "Active";
       } else if (codeField && f.key === codeField.key) {
-        blank[f.key] = computeNextCode(codeField, rows);
+        blank[f.key] = computeNextCode(codeField, freshRows);
       } else {
         blank[f.key] = "";
       }
@@ -426,10 +424,10 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         if (f.computed) payload[f.key] = computedValueFor(f, formRow);
       }
       if (formRow.id) {
-        await apiClient.updateMasterRecord(masterKey, String(formRow.id), payload);
+        await apiClient.updateMasterRecord(effectiveMasterKey, String(formRow.id), payload);
       } else {
         try {
-          await apiClient.createMasterRecord(masterKey, payload);
+          await apiClient.createMasterRecord(effectiveMasterKey, payload);
         } catch (err) {
           // The auto-suggested code can go stale if the list we computed it
           // from wasn't the latest (another save landed in between, or two
@@ -439,10 +437,10 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
           const codeField = autoCodeField();
           const isCodeConflict = err instanceof Error && /already exists/i.test(err.message);
           if (isCodeConflict && codeField && payload[codeField.key] === formRow[codeField.key]) {
-            const fresh = await apiClient.masterRecords(masterKey);
+            const fresh = await apiClient.masterRecords(effectiveMasterKey);
             const retryCode = computeNextCode(codeField, fresh.data);
             payload[codeField.key] = retryCode;
-            await apiClient.createMasterRecord(masterKey, payload);
+            await apiClient.createMasterRecord(effectiveMasterKey, payload);
           } else {
             throw err;
           }
@@ -471,7 +469,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     if (!deleteTarget) return;
     setSaving(true);
     try {
-      await apiClient.deactivateMasterRecord(masterKey, deleteTarget.id);
+      await apiClient.deactivateMasterRecord(effectiveMasterKey, deleteTarget.id);
       await load();
       setDeleteTarget(null);
     } catch (err) {

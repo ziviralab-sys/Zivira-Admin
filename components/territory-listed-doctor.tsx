@@ -187,7 +187,13 @@ export function TerritoryListedDoctor() {
     // Column Filters
     for (const [key, val] of Object.entries(columnFilters)) {
       if (val !== "All") {
-        const rowVal = String((x as any)[key] || "").toUpperCase();
+        // The doctor records this screen lists don't carry a separate "hq"
+        // field — Doctor.territory already stores the HQ name (the same
+        // value the seed data assigns from TERRITORIES[...].hq), so fall
+        // back to it here the same way the HQ column and its filter options
+        // already do.
+        const raw = key === "hq" ? ((x as any).hq ?? (x as any).territory) : (x as any)[key];
+        const rowVal = String(raw || "").toUpperCase();
         if (rowVal !== val.toUpperCase()) isMatch = false;
       }
     }
@@ -333,10 +339,10 @@ export function TerritoryListedDoctor() {
                 <th>
                   <div style={{ minWidth: "140px" }}>
                     <ColumnFilterDropdown 
-                      title="HQ" 
-                      value={columnFilters['hq'] || "All"} 
-                      options={Array.from(new Set(list.map(r => String(r.hq || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))} 
-                      onChange={(val) => setColumnFilters(prev => ({ ...prev, hq: val }))} 
+                      title="HQ"
+                      value={columnFilters['hq'] || "All"}
+                      options={Array.from(new Set(list.map(r => String(r.hq || r.territory || "")))).filter(Boolean).sort().map(v => ({label: v, value: v}))}
+                      onChange={(val) => setColumnFilters(prev => ({ ...prev, hq: val }))}
                     />
                   </div>
                 </th>
@@ -363,7 +369,7 @@ export function TerritoryListedDoctor() {
                   <td>{row.specialty || "-"}</td>
                   <td>{row.category || "-"}</td>
                   <td>{row.mappedEmployeeCode || row.mr || "-"}</td>
-                  <td>{row.hq || "-"}</td>
+                  <td>{row.hq || row.territory || "-"}</td>
                   <td>
                     <span style={{
                       padding: "2px 8px",

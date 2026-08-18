@@ -107,7 +107,7 @@ export function HospitalMaster() {
       type: row.type || "Multi-Specialty",
       city: row.city || "Chennai",
       mr: row.medicalRepresentative || "",
-      status: row.status || "ACTIVE",
+      status: String(row.status || "ACTIVE").toUpperCase() === "INACTIVE" ? "Inactive" : "Active",
       address: "21, Greams Road",
       area: "Thousand Lights",
       state: "Tamil Nadu",
@@ -128,23 +128,52 @@ export function HospitalMaster() {
   }
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    // The backend only accepts "ACTIVE"/"INACTIVE" — the form's Active/
+    // Inactive labels were being sent as-is and rejected by validation on
+    // every single save, which is what made Hospital Master's Add always
+    // fail.
+    const statusUpper = form.status.toUpperCase() as "ACTIVE" | "INACTIVE";
     try {
       if (view === "add") {
-        await apiClient.createHospital({
-          hospitalCode: form.code,
-          hospitalName: form.name,
-          type: form.type as any,
-          city: form.city,
-          medicalRepresentative: form.mr,
-          status: form.status as any
-        });
+        try {
+          await apiClient.createHospital({
+            hospitalCode: form.code,
+            hospitalName: form.name,
+            type: form.type as any,
+            city: form.city,
+            medicalRepresentative: form.mr,
+            status: statusUpper
+          });
+        } catch (err: any) {
+          // Same staleness class of bug as elsewhere: if the suggested code
+          // collided because another hospital was added since this list was
+          // last fetched, recompute against the live count and retry once.
+          if (err?.message && /already exists/i.test(err.message)) {
+            const fresh = await apiClient.hospitals();
+            const maxNum = fresh.data.reduce((max: number, r: any) => {
+              const match = String(r.hospitalCode || "").match(/(\d+)$/);
+              const n = match ? parseInt(match[1], 10) : 0;
+              return n > max ? n : max;
+            }, 0);
+            await apiClient.createHospital({
+              hospitalCode: `HOS${String(maxNum + 1).padStart(3, "0")}`,
+              hospitalName: form.name,
+              type: form.type as any,
+              city: form.city,
+              medicalRepresentative: form.mr,
+              status: statusUpper
+            });
+          } else {
+            throw err;
+          }
+        }
       } else if (view === "edit" && selectedHospital) {
         await apiClient.updateHospital(selectedHospital.id, {
           hospitalName: form.name,
           type: form.type as any,
           city: form.city,
           medicalRepresentative: form.mr,
-          status: form.status as any
+          status: statusUpper
         });
       }
       await fetchData();

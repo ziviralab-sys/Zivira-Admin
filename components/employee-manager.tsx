@@ -1,12 +1,25 @@
 "use client";
 
 import type { Employee } from "@zivira/types";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X, AlertTriangle } from "lucide-react";
 import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
 import { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { formatDate } from "@/lib/format-date";
+
+// The backend's employees.role is a fixed enum (NBH/BH/RBM/ZBM/ABM/SR_MR/MR/
+// OTHER) and is required, but the Add Employee form only surfaces
+// Designation — so every designation option needs a role it maps to.
+const DESIGNATION_TO_ROLE: Record<string, string> = {
+  "Medical Representative": "MR",
+  "Area Sales Manager": "ABM",
+  "Regional Sales Manager": "RBM",
+  "Zonal Sales Manager": "ZBM",
+  "Product Manager": "OTHER",
+  "Finance Executive": "OTHER",
+  "HR Executive": "OTHER"
+};
 
 // Sample initial data with all SFA master columns
 const initialFieldForce: any[] = [];
@@ -41,8 +54,10 @@ export function EmployeeManager() {
     region: "Tamil Nadu",
     hq: "",
     patch: "",
+    drivingLicense: "",
     status: "ACTIVE"
   });
+  const [saving, setSaving] = useState(false);
 
   async function loadEmployees() {
     setLoading(true);
@@ -71,33 +86,54 @@ export function EmployeeManager() {
     }
   }
 
-  function handleSave(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.name.trim() || !form.employeeCode.trim()) return;
+    if (!form.name.trim() || !form.employeeCode.trim() || !form.hq.trim()) return;
 
-    const newEmp = {
-      ...form,
-      id: Math.random().toString(36).slice(2, 9)
-    };
-    setEmployees([newEmp, ...employees]);
-    setShowForm(false);
-    setForm({
-      employeeCode: "",
-      name: "",
-      gender: "Male",
-      dob: "",
-      joinDate: "",
-      phone: "",
-      email: "",
-      department: "Sales",
-      designation: "Medical Representative",
-      division: "Zivira",
-      reportingManager: "",
-      region: "Tamil Nadu",
-      hq: "",
-      patch: "",
-      status: "ACTIVE"
-    });
+    setSaving(true);
+    setError("");
+    try {
+      // The backend's Employee model requires "role" (a fixed enum) and
+      // "territory" — neither is a field this form shows directly, so they
+      // have to be derived from Designation and HQ respectively. Previously
+      // this form never called the API at all (it only updated local
+      // state), which is why nothing ever actually persisted.
+      await apiClient.createEmployee({
+        name: form.name,
+        employeeCode: form.employeeCode,
+        designation: form.designation,
+        division: form.division,
+        reportingManager: form.reportingManager || undefined,
+        territory: form.hq,
+        role: (DESIGNATION_TO_ROLE[form.designation] ?? "OTHER") as any,
+        drivingLicense: form.drivingLicense || undefined,
+        status: form.status as "ACTIVE" | "INACTIVE"
+      } as any);
+      setShowForm(false);
+      setForm({
+        employeeCode: "",
+        name: "",
+        gender: "Male",
+        dob: "",
+        joinDate: "",
+        phone: "",
+        email: "",
+        department: "Sales",
+        designation: "Medical Representative",
+        division: "Zivira",
+        reportingManager: "",
+        region: "Tamil Nadu",
+        hq: "",
+        patch: "",
+        drivingLicense: "",
+        status: "ACTIVE"
+      });
+      await loadEmployees();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save employee");
+    } finally {
+      setSaving(false);
+    }
   }
 
   useEffect(() => {
@@ -115,8 +151,31 @@ export function EmployeeManager() {
           Add Employee
         </button>
       </div>
-      {error ? <p className="form-error">{error}</p> : null}
-      
+      {error && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200
+          }}
+        >
+          <div style={{ background: "var(--panel)", borderRadius: "10px", padding: "24px", minWidth: "320px", maxWidth: "440px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <AlertTriangle size={18} color="#ef4444" />
+                <h3 style={{ margin: 0, fontSize: "1rem", color: "#ef4444" }}>Something went wrong</h3>
+              </div>
+              <button className="subdivision-icon-button" onClick={() => setError("")} type="button" title="Close" aria-label="Close">
+                <X size={16} />
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: "13px", color: "var(--ink)" }}>{error}</p>
+            <button className="button button-secondary" style={{ marginTop: "16px", width: "100%" }} onClick={() => setError("")} type="button">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {showForm ? (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center" }}>
           <div style={{ background: "var(--panel)", borderRadius: "10px", width: "100%", maxWidth: "800px", maxHeight: "90vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
@@ -219,6 +278,10 @@ export function EmployeeManager() {
             <input required value={form.patch} onChange={(e) => setForm({ ...form, patch: e.target.value })} placeholder="e.g. T. Nagar" />
           </div>
           <div className="field">
+            <label>Driving License</label>
+            <input value={form.drivingLicense} onChange={(e) => setForm({ ...form, drivingLicense: e.target.value })} placeholder="e.g. DL-MH-20-1234567" />
+          </div>
+          <div className="field">
             <label>Employee Status</label>
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as any })}>
               <option value="ACTIVE">Active</option>
@@ -227,7 +290,7 @@ export function EmployeeManager() {
           </div>
           <div style={{ gridColumn: "span 2", display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "12px" }}>
               <button className="button button-secondary" type="button" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="button" type="submit">Add Employee</button>
+              <button className="button" type="submit" disabled={saving}>{saving ? "Saving..." : "Add Employee"}</button>
             </div>
             </form>
           </div>
