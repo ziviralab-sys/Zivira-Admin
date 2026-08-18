@@ -55,7 +55,7 @@ export function ColumnFilterDropdown({
             left: 0,
             width: "max-content",
             minWidth: "160px",
-            background: "#fff",
+            background: "var(--panel)",
             border: "1px solid var(--border)",
             borderRadius: "6px",
             boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
@@ -74,7 +74,7 @@ export function ColumnFilterDropdown({
             style={{
               padding: "8px 16px",
               textAlign: "left",
-              background: value === "All" ? "#fff7ed" : "transparent",
+              background: value === "All" ? "rgba(249, 115, 22, 0.1)" : "transparent",
               color: value === "All" ? "#f97316" : "var(--ink)",
               fontSize: "13px",
               cursor: "pointer",
@@ -101,7 +101,7 @@ export function ColumnFilterDropdown({
                 style={{
                   padding: "8px 16px",
                   textAlign: "left",
-                  background: isSelected ? "#fff7ed" : "transparent",
+                  background: isSelected ? "rgba(249, 115, 22, 0.1)" : "transparent",
                   color: isSelected ? "#f97316" : "var(--ink)",
                   fontSize: "13px",
                   cursor: "pointer",

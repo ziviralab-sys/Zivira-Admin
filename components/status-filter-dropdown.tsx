@@ -56,7 +56,7 @@ export function StatusFilterDropdown({
             top: "calc(100% + 4px)",
             left: 0,
             width: "160px",
-            background: "#fff",
+            background: "var(--panel)",
             border: "1px solid var(--border)",
             borderRadius: "6px",
             boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
@@ -79,7 +79,7 @@ export function StatusFilterDropdown({
                 style={{
                   padding: "8px 16px",
                   textAlign: "left",
-                  background: isSelected ? "#fff7ed" : "transparent",
+                  background: isSelected ? "rgba(249, 115, 22, 0.1)" : "transparent",
                   color: isSelected ? "#f97316" : "var(--ink)",
                   fontSize: "13px",
                   cursor: "pointer",
