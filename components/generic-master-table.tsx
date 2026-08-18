@@ -603,9 +603,30 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
               )}
               {filteredRows.map((row) => (
                 <tr key={row.id}>
-                  {schema.fields.map((f) => (
-                    <td key={f.key}>{f.computed ? computedValueFor(f, row) : String(row[f.key] ?? "")}</td>
-                  ))}
+                  {schema.fields.map((f) => {
+                    const value = f.computed ? computedValueFor(f, row) : String(row[f.key] ?? "");
+                    const isStatusColumn = f.key.toLowerCase() === "status" || f.label.toLowerCase() === "status";
+                    
+                    if (isStatusColumn && (value === "Active" || value === "ACTIVE" || value === "Inactive" || value === "INACTIVE")) {
+                      const isActive = value === "Active" || value === "ACTIVE";
+                      return (
+                        <td key={f.key}>
+                          <span style={{
+                            padding: "2px 8px",
+                            borderRadius: "999px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            background: isActive ? "#10b98115" : "#ef444415",
+                            color: isActive ? "#10b981" : "#ef4444",
+                            border: isActive ? "1px solid #10b98125" : "1px solid #ef444425"
+                          }}>
+                            {value}
+                          </span>
+                        </td>
+                      );
+                    }
+                    return <td key={f.key}>{value}</td>;
+                  })}
                   {!isReadonly && (
                     <td>
                       <button className="subdivision-icon-button" onClick={() => openEditForm(row)} type="button" title="Edit">
