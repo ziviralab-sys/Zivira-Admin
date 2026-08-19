@@ -527,12 +527,16 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         let lastErr: unknown = null;
         // The auto-suggested code can go stale if the list we computed it
         // from wasn't the latest (another save landed in between, two tabs
-        // open, etc). Rather than surface a scary "already exists" error
-        // for something the user didn't even type in themselves, re-fetch
-        // and retry with a bumped code — a few times if needed, since a
-        // single retry can still collide if several stale codes are queued
-        // up (e.g. right after a bulk import).
-        for (let attempt = 0; attempt < 5; attempt++) {
+        // open, months of prior test data piled up, etc). Rather than
+        // surface a scary "already exists" error for something the user
+        // didn't even type in themselves, re-fetch and retry with a bumped
+        // code. Each retry checks the *actual* set of taken codes from the
+        // fresh fetch and keeps bumping until it lands on one that isn't in
+        // that set, instead of trusting a single recomputation — a set that
+        // has accumulated many stale/duplicate codes over repeated testing
+        // can otherwise make computeNextCode land on an already-taken value
+        // more than once in a row and exhaust a small retry budget.
+        for (let attempt = 0; attempt < 20; attempt++) {
           try {
             await apiClient.createMasterRecord(effectiveMasterKey, payload);
             lastErr = null;
@@ -543,14 +547,21 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
             const codeIsAutoFilled = codeField && payload[codeField.key] === originalCode || (codeField && attempt > 0);
             if (!isCodeConflict || !codeField || !codeIsAutoFilled) break;
             const fresh = await apiClient.masterRecords(effectiveMasterKey);
+            const takenCodes = new Set(
+              fresh.data
+                .map((r) => r[codeField.key])
+                .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+            );
             let retryCode = computeNextCode(codeField, fresh.data);
-            // If recomputing from a fresh fetch still lands on the exact
-            // code that was just rejected, force forward progress by
-            // bumping its trailing number directly rather than repeating
-            // the same failing request.
-            if (retryCode === payload[codeField.key]) {
+            // Keep bumping the trailing number until it's a code we know
+            // for certain isn't already taken, rather than trusting a
+            // single recomputation to have jumped far enough ahead.
+            let guard = 0;
+            while (takenCodes.has(retryCode) && guard < 200) {
               const match = String(retryCode).match(/^(.*?)(\d+)$/);
-              if (match) retryCode = `${match[1]}${String(parseInt(match[2], 10) + 1).padStart(match[2].length, "0")}`;
+              if (!match) break;
+              retryCode = `${match[1]}${String(parseInt(match[2], 10) + 1).padStart(match[2].length, "0")}`;
+              guard++;
             }
             payload[codeField.key] = retryCode;
           }
