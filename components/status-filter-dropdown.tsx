@@ -66,33 +66,6 @@ export function StatusFilterDropdown({
             gap: "4px"
           }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              onChange("All");
-              setOpen(false);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 10px",
-              textAlign: "left",
-              background: value === "All" ? "var(--line)" : "transparent",
-              color: "var(--muted)",
-              fontSize: "13px",
-              cursor: "pointer",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--line)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = value === "All" ? "var(--line)" : "transparent")}
-          >
-            <ListFilter size={16} />
-            Clear Filter
-          </button>
-          <div style={{ height: "1px", background: "var(--border)", margin: "2px 6px" }} />
           {options.map((opt) => {
             const isSelected = opt.value === value || (value === "Active" && opt.value === "ACTIVE") || (value === "Inactive" && opt.value === "INACTIVE");
             const isActive = opt.value === "ACTIVE";
@@ -131,6 +104,33 @@ export function StatusFilterDropdown({
               </button>
             );
           })}
+          <div style={{ height: "1px", background: "var(--border)", margin: "2px 6px" }} />
+          <button
+            type="button"
+            onClick={() => {
+              onChange("All");
+              setOpen(false);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 10px",
+              textAlign: "left",
+              background: value === "All" ? "var(--line)" : "transparent",
+              color: "var(--muted)",
+              fontSize: "13px",
+              cursor: "pointer",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: 500
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--line)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = value === "All" ? "var(--line)" : "transparent")}
+          >
+            <ListFilter size={16} />
+            Clear Filter
+          </button>
         </div>
       )}
     </div>
