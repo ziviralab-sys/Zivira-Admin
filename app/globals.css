@@ -1533,9 +1533,14 @@ tr:last-child td {
 }
 
 .subdivision-table th {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  /* `position: sticky` here reproduces the same Chromium bug documented
+     below for `.subdivision-table thead th` (top offset gets applied as an
+     additive shift instead of a clamp) — except here it doesn't need a
+     scroll to trigger it: any header cell that grows (e.g. the Status /
+     column filter dropdown opening its absolutely-positioned menu) is
+     enough to make the browser recompute sticky offsets for every other
+     `th` in the row, visibly breaking the header line and shifting columns
+     out of alignment with the body. Kept static, like the thead fix. */
   background: color-mix(in srgb, var(--panel) 92%, var(--brand));
   color: var(--muted);
   font-size: 11px;
