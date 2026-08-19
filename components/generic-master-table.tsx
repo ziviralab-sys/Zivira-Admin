@@ -441,6 +441,39 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     return !!f.options && f.options.length === 2 && f.options.includes("Active") && f.options.includes("Inactive");
   }
 
+  // Renders Active/Inactive values as a colored pill (green/red) instead of
+  // plain text, matching the styling already used in the dedicated master
+  // components (hospital-master.tsx, chemist-master.tsx, employee-manager.tsx).
+  function renderCellValue(f: MasterField, row: MasterRecord) {
+    const raw = f.computed ? computedValueFor(f, row) : row[f.key];
+    if (isActiveInactiveField(f)) {
+      const text = String(raw ?? "").trim();
+      const isActive = text.toUpperCase() === "ACTIVE";
+      const isInactive = text.toUpperCase() === "INACTIVE";
+      if (isActive || isInactive) {
+        const color = isActive ? "#10b981" : "#ef4444";
+        return (
+          <span
+            style={{
+              display: "inline-block",
+              padding: "3px 10px",
+              borderRadius: "999px",
+              fontSize: "12px",
+              fontWeight: 600,
+              background: `${color}15`,
+              color,
+              border: `1px solid ${color}25`,
+              textTransform: "capitalize"
+            }}
+          >
+            {text}
+          </span>
+        );
+      }
+    }
+    return String(raw ?? "");
+  }
+
   async function openAddForm() {
     const codeField = autoCodeField();
     // Recompute against a fresh fetch rather than whatever `rows` happened
@@ -813,7 +846,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
               {filteredRows.map((row) => (
                 <tr key={row.id}>
                   {schema.fields.map((f) => (
-                    <td key={f.key}>{f.computed ? computedValueFor(f, row) : String(row[f.key] ?? "")}</td>
+                    <td key={f.key}>{renderCellValue(f, row)}</td>
                   ))}
                   {!isReadonly && (
                     <td>

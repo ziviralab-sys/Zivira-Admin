@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CheckCircle2, XCircle, ListFilter } from "lucide-react";
 
 export function StatusFilterDropdown({ 
   value, 
@@ -23,7 +23,6 @@ export function StatusFilterDropdown({
   }, []);
 
   const options = [
-    { label: "Clear filter", value: "All" },
     { label: "Active", value: "ACTIVE" },
     { label: "Inactive", value: "INACTIVE" }
   ];
@@ -55,19 +54,22 @@ export function StatusFilterDropdown({
             position: "absolute",
             top: "calc(100% + 4px)",
             left: 0,
-            width: "160px",
+            width: "170px",
             background: "var(--panel)",
             border: "1px solid var(--border)",
-            borderRadius: "6px",
+            borderRadius: "10px",
             boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
             zIndex: 50,
-            padding: "6px 0",
+            padding: "6px",
             display: "flex",
-            flexDirection: "column"
+            flexDirection: "column",
+            gap: "4px"
           }}
         >
           {options.map((opt) => {
             const isSelected = opt.value === value || (value === "Active" && opt.value === "ACTIVE") || (value === "Inactive" && opt.value === "INACTIVE");
+            const isActive = opt.value === "ACTIVE";
+            const tint = isActive ? "#10b981" : "#ef4444";
             return (
               <button
                 key={opt.value}
@@ -77,31 +79,58 @@ export function StatusFilterDropdown({
                   setOpen(false);
                 }}
                 style={{
-                  padding: "8px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "8px 10px",
                   textAlign: "left",
-                  background: isSelected ? "rgba(249, 115, 22, 0.1)" : "transparent",
-                  color: isSelected ? "#f97316" : "var(--ink)",
+                  background: isSelected ? `${tint}15` : "transparent",
+                  color: isSelected ? tint : "var(--ink)",
                   fontSize: "13px",
                   cursor: "pointer",
                   border: "none",
-                  borderLeft: isSelected ? "3px solid #f97316" : "3px solid transparent",
-                  fontWeight: isSelected ? 600 : 400
+                  borderRadius: "8px",
+                  fontWeight: isSelected ? 600 : 500
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "var(--line)";
-                  }
+                  if (!isSelected) e.currentTarget.style.background = "var(--line)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.background = "transparent";
-                  }
+                  if (!isSelected) e.currentTarget.style.background = "transparent";
                 }}
               >
+                {isActive ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
                 {opt.label}
               </button>
             );
           })}
+          <div style={{ height: "1px", background: "var(--border)", margin: "2px 6px" }} />
+          <button
+            type="button"
+            onClick={() => {
+              onChange("All");
+              setOpen(false);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 10px",
+              textAlign: "left",
+              background: value === "All" ? "var(--line)" : "transparent",
+              color: "var(--muted)",
+              fontSize: "13px",
+              cursor: "pointer",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: 500
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--line)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = value === "All" ? "var(--line)" : "transparent")}
+          >
+            <ListFilter size={16} />
+            Clear Filter
+          </button>
         </div>
       )}
     </div>
