@@ -304,6 +304,10 @@ export function AdminDrilldown({ node, path }: { node: ZiviraTreeNode; path: str
     return <GenericMasterTable masterKey="claimsMaster" />;
   }
 
+  if (pathStr.endsWith("ims")) {
+    return <GenericMasterTable masterKey="imsMaster" />;
+  }
+
   if (pathStr.includes("activity/dcr") || pathStr.includes("activities/dcr")) {
     return <AdminDcrView />;
   }

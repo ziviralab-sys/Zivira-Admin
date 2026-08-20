@@ -169,7 +169,11 @@ export const ziviraApplicationTree: ZiviraTreeNode[] = [
           node("Target Master", "target-master", "division"),
           node("Primary Sales", "primary-sales", "division"),
           node("Secondary Sales", "secondary-sales", "division"),
-          node("Claims Master", "claims-master", "division")
+          node("Claims Master", "claims-master", "division"),
+          // Zivira_Master_Tab_Client_Change_3B.docx — Sales has 5 buttons:
+          // Target Master, Primary Sales, Secondary Sales, Claims Master,
+          // and IMS. The first four were already wired up; IMS was missing.
+          node("IMS", "ims", "division")
         ])
       ]),
       node("Activities", "activities", "division", [
