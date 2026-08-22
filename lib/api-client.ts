@@ -745,5 +745,139 @@ export const apiClient = {
       method: "PATCH",
       body: JSON.stringify({ value })
     });
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  // Zivira_Project_Basic.docx — SFA/CRM Analytics + BI Platform
+  // The backend for every module below already exists (routes/company.
+  // routes.ts /analytics/*); these are purely new, additive read/write
+  // wrappers — nothing above this line is touched.
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Topic 2 — Attendance & Compliance Analytics / Topic 4 — Chronic Defaulter Detection
+  complianceAnalytics(month?: string) {
+    return fetchRaw<{ data: ComplianceRow[]; month: string; summary: { submittedToday: number; pendingDCR: number; missedYesterday: number; chronicDefaulters: number; avgCompliancePercent: number } }>(`/company/analytics/compliance${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 3 — Salary Integration Engine (payroll hold workflow)
+  payrollAnalytics(month?: string) {
+    return fetchRaw<{ data: PayrollStatusRow[]; month: string; summary: { onHold: number; pendingApproval: number; released: number } }>(`/company/analytics/payroll${month ? `?month=${month}` : ""}`);
+  },
+
+  releasePayroll(id: string) {
+    return request<PayrollStatusRow>(`/company/analytics/payroll/${id}/release`, { method: "PATCH" });
+  },
+
+  // Topic 5 — Representative vs Manager Analysis / Topic 6 — Joint Field Work Analysis
+  repManagerAnalysis(month?: string) {
+    return fetchRaw<{ data: RepAnalysisRow[]; managers: ManagerJointWorkRow[]; month: string }>(`/company/analytics/rep-manager${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 7 — Territory Coverage Analytics / Topic 8 — Doctor Exception Management
+  // (both riding on the existing /company/doctor-coverage aggregate, which
+  // already includes alertBucket / daysSinceLastVisit / exceptionReason)
+  territoryCoverage(month?: string) {
+    return request<TerritoryCoverageRow[]>(`/company/doctor-coverage${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 9 — Product Exposure Analytics / Topic 10 — Product-wise Performance Dashboard
+  productExposure(month?: string) {
+    return request<ProductExposureRow[]>(`/company/analytics/product-exposure${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 11 — Sample Distribution Analytics
+  sampleAllocations(month?: string) {
+    return request<SampleAllocationRow[]>(`/company/sample-allocations${month ? `?month=${month}` : ""}`);
+  },
+
+  issueSampleAllocation(input: { employeeCode: string; productCode: string; productName: string; batchNumber?: string; qtyIssued: number; month?: string; notes?: string }) {
+    return request<SampleAllocationRow>("/company/sample-allocations", { method: "POST", body: JSON.stringify(input) });
+  },
+
+  // Topic 11/12 — Sample Distribution + Sample vs Doctor Input Analysis
+  sampleDistribution(month?: string) {
+    return fetchRaw<{ data: SampleDistributionRow[]; month: string }>(`/company/analytics/sample-distribution${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 14 — KPI Engine
+  kpiEngine(month?: string) {
+    return fetchRaw<{ reps: RepKpi[]; managers: ManagerKpi[]; month: string }>(`/company/analytics/kpi${month ? `?month=${month}` : ""}`);
+  },
+
+  // Topic 15 — Alert & Notification Engine
+  alertsEngine(month?: string) {
+    return fetchRaw<{ data: AlertRow[]; month: string; summary: { high: number; medium: number; low: number } }>(`/company/analytics/alerts${month ? `?month=${month}` : ""}`);
   }
 };
+
+// ── Response shapes for the analytics endpoints above. Defined locally
+// (rather than in @zivira/types, which is shared across every portal) so
+// this purely-additive BI layer can never affect any other app's build. ──
+export type ComplianceRow = {
+  employeeCode: string; employeeName?: string; name?: string; role?: string;
+  submittedToday: boolean; pendingDCR: boolean; missedYesterday: boolean;
+  missedThisWeek: number; missedThisMonth: number; compliancePercent: number;
+  chronicDefaulter: boolean; missedDaysIn30: number;
+};
+export type PayrollStatusRow = {
+  id: string; employeeCode: string; employeeName?: string; role?: string; month: string;
+  status: "RELEASED" | "HOLD" | "EXPLANATION_SUBMITTED";
+  holdReason?: string | null; missedDaysSnapshot?: number;
+  employeeExplanation?: string | null; managerApprovedByName?: string | null; releasedAt?: string | null;
+};
+export type RepAnalysisRow = {
+  employeeCode: string; name: string; reportingManager?: string; reportingManagerName?: string;
+  doctorsVisited: number; managerJointVisits: number; coveragePercent: number;
+};
+export type ManagerJointWorkRow = {
+  managerCode: string; managerName?: string; totalJointCalls: number; averageJointCalls: number;
+  jointCallPercent: number; teamSize: number; rank?: number;
+};
+export type TerritoryCoverageRow = DoctorCoverageRow & {
+  assignedMRName?: string | null;
+  lastVisitDateEver: string | null;
+  daysSinceLastVisit: number | null;
+  alertBucket: "NEVER_VISITED" | "180" | "90" | "60" | "30" | null;
+  exceptionReason?: string | null;
+  exceptionNotes?: string | null;
+  exceptionMonth?: string | null;
+};
+export type ProductExposureRow = {
+  productCode?: string; productName: string; doctorsCovered: number; samplesGiven: number;
+  prescriptionInterestHigh?: number; prescriptionInterestMedium?: number; prescriptionInterestLow?: number;
+  topRepresentative?: string; topRegion?: string;
+};
+export type SampleAllocationRow = {
+  id: string; allocationId: string; employeeCode: string; employeeName?: string;
+  productCode: string; productName: string; batchNumber?: string | null; qtyIssued: number; month: string;
+  issuedBy?: string | null; notes?: string | null; createdAt?: string;
+};
+export type SampleDistributionRow = {
+  productCode?: string; productName: string; totalIssued: number; totalDistributed: number; remaining: number;
+  doctorWise?: { doctorId: string; doctorName?: string; qty: number }[];
+};
+export type RepKpi = {
+  employeeCode: string; name?: string; doctorsVisited: number; callsCompleted: number;
+  dcrSubmitted: number; productsPromoted: number; samplesDistributed: number; conversionRate?: number;
+};
+export type ManagerKpi = {
+  employeeCode: string; name?: string; jointCalls: number; coveragePercent: number;
+  teamCompliancePercent: number; doctorCoverage?: number; managerEffectiveness?: number;
+};
+export type AlertRow = {
+  type: string; severity: "HIGH" | "MEDIUM" | "LOW"; message: string;
+  employeeCode?: string; doctorId?: string; productCode?: string; createdAt?: string;
+};
+
+async function fetchRaw<T>(path: string): Promise<T> {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: "no-store",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? "API request failed");
+  }
+  return payload as T;
+}

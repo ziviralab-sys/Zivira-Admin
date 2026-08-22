@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Building2,
   Cake,
   CalendarDays,
@@ -35,7 +36,12 @@ export const companyNav: NavGroup[] = [
       { title: "Doctor Celebrations", href: "/admin/doctor-celebrations", icon: Cake },
       { title: "Branches & GST", href: "/admin/branches", icon: Building2 },
       { title: "Doctor Coverage", href: "/admin/doctor-coverage", icon: Stethoscope },
-      { title: "Tour Plans", href: "/admin/tour-plans", icon: FileBarChart }
+      { title: "Tour Plans", href: "/admin/tour-plans", icon: FileBarChart },
+      // Zivira_Project_Basic.docx — SFA/CRM Analytics + BI Platform hub.
+      // Purely additive: every module behind this link is a new route
+      // consuming the existing /company/analytics/* backend; nothing above
+      // this line was changed.
+      { title: "Analytics & BI Center", href: "/admin/analytics", icon: BarChart3 }
     ]
   }
 ];
