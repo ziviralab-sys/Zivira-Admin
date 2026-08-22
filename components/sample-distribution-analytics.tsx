@@ -19,7 +19,8 @@
 import { PackageCheck, Plus, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { BackButton } from "@/components/back-button";
-import { apiClient, type DoctorSampleRow, type ProductSampleRow, type RepSampleBalanceRow, type SampleAllocationRow } from "@/lib/api-client";
+import { ExportMenuButton } from "@/components/export-menu-button";
+import { apiClient, type DoctorSampleRow, type Employee, type Product, type ProductSampleRow, type RepSampleBalanceRow, type SampleAllocationRow } from "@/lib/api-client";
 
 export function SampleDistributionAnalytics() {
   const [byRep, setByRep] = useState<RepSampleBalanceRow[]>([]);
@@ -27,9 +28,10 @@ export function SampleDistributionAnalytics() {
   const [byDoctor, setByDoctor] = useState<DoctorSampleRow[]>([]);
   const [totals, setTotals] = useState<{ totalIssued: number; totalDistributed: number; totalRemaining: number } | null>(null);
   const [allocations, setAllocations] = useState<SampleAllocationRow[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ employeeCode: "", productCode: "", productName: "", batchNumber: "", qtyIssued: "" });
 
@@ -37,12 +39,16 @@ export function SampleDistributionAnalytics() {
     setLoading(true);
     setError("");
     try {
-      const [dist, allocs] = await Promise.all([apiClient.sampleDistribution(), apiClient.sampleAllocations()]);
+      const [dist, allocs, emps, prods] = await Promise.all([
+        apiClient.sampleDistribution(), apiClient.sampleAllocations(), apiClient.employees(), apiClient.products()
+      ]);
       setByRep(dist.byRep);
       setByProduct(dist.byProduct);
       setByDoctor(dist.byDoctor);
       setTotals(dist.totals);
       setAllocations(allocs.data);
+      setEmployees(emps.data);
+      setProducts(prods.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Load failed");
     } finally {
@@ -68,7 +74,6 @@ export function SampleDistributionAnalytics() {
         qtyIssued: Number(form.qtyIssued)
       });
       setForm({ employeeCode: "", productCode: "", productName: "", batchNumber: "", qtyIssued: "" });
-      setShowForm(false);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Issue failed");
@@ -81,14 +86,22 @@ export function SampleDistributionAnalytics() {
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
-          <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
+          <p className="subdivision-eyebrow">Samples</p>
           <h2>Sample Distribution Analytics</h2>
-          <p>Total samples issued vs distributed vs remaining — rep-wise, product-wise and doctor-wise — plus the stock-issue ledger.</p>
+          <p>Issued vs distributed vs remaining sample stock, by rep, by product, and by doctor.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <BackButton fallback="/admin/analytics" />
-          <button className="button" onClick={() => setShowForm((v) => !v)} type="button"><Plus size={15} /> Issue Stock</button>
           <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+          <ExportMenuButton
+            filename="sample-distribution"
+            sections={[
+              { title: "By Product", headers: ["Product", "Issued", "Distributed", "Remaining"], rows: byProduct.map((d) => [d.productName, d.totalIssued, d.totalDistributed, d.totalRemaining]) },
+              { title: "By Rep", headers: ["Representative", "Issued", "Distributed", "Remaining"], rows: byRep.map((r) => [r.employeeName ?? r.employeeCode, r.totalIssued, r.totalDistributed, r.totalRemaining]) },
+              { title: "By Doctor", headers: ["Doctor", "Total Samples Received"], rows: byDoctor.map((d) => [d.doctorName, d.totalSamplesReceived]) },
+              { title: "Stock Ledger", headers: ["Allocation ID", "Employee", "Product", "Batch", "Qty Issued", "Month"], rows: allocations.map((a) => [a.allocationId, a.employeeName ?? a.employeeCode, a.productName, a.batchNumber ?? "—", a.qtyIssued, a.month]) }
+            ]}
+          />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
@@ -101,26 +114,47 @@ export function SampleDistributionAnalytics() {
         </div>
       )}
 
-      {showForm && (
-        <div className="card" style={{ padding: 16, marginBottom: 20 }}>
-          <div className="grid grid-3" style={{ gap: 10 }}>
-            <input className="input" placeholder="Employee Code" value={form.employeeCode} onChange={(e) => setForm({ ...form, employeeCode: e.target.value })} />
-            <input className="input" placeholder="Product Code" value={form.productCode} onChange={(e) => setForm({ ...form, productCode: e.target.value })} />
-            <input className="input" placeholder="Product Name" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
-            <input className="input" placeholder="Batch No. (optional)" value={form.batchNumber} onChange={(e) => setForm({ ...form, batchNumber: e.target.value })} />
-            <input className="input" placeholder="Quantity Issued" type="number" min={1} value={form.qtyIssued} onChange={(e) => setForm({ ...form, qtyIssued: e.target.value })} />
-          </div>
-          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <button className="button" onClick={issueStock} disabled={saving} type="button">{saving ? "Saving…" : "Save"}</button>
-            <button className="button button-secondary" onClick={() => setShowForm(false)} type="button">Cancel</button>
-          </div>
+      <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+        <div className="grid" style={{ gap: 10, gridTemplateColumns: "1.4fr 1.4fr 1fr 0.7fr auto", alignItems: "end" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+            Representative
+            <select className="input" value={form.employeeCode} onChange={(e) => setForm({ ...form, employeeCode: e.target.value })}>
+              <option value="">Select…</option>
+              {employees.map((e) => <option key={e.employeeCode} value={e.employeeCode}>{e.name} ({e.employeeCode})</option>)}
+            </select>
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+            Product
+            <select
+              className="input"
+              value={form.productCode}
+              onChange={(e) => {
+                const p = products.find((pr) => pr.code === e.target.value);
+                setForm({ ...form, productCode: e.target.value, productName: p?.name ?? "" });
+              }}
+            >
+              <option value="">Select…</option>
+              {products.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
+            </select>
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+            Batch No.
+            <input className="input" placeholder="Optional" value={form.batchNumber} onChange={(e) => setForm({ ...form, batchNumber: e.target.value })} />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--muted)" }}>
+            Qty
+            <input className="input" placeholder="50" type="number" min={1} value={form.qtyIssued} onChange={(e) => setForm({ ...form, qtyIssued: e.target.value })} />
+          </label>
+          <button className="button" onClick={issueStock} disabled={saving} type="button" style={{ whiteSpace: "nowrap" }}>
+            <Plus size={15} /> {saving ? "Saving…" : "Issue Stock"}
+          </button>
         </div>
-      )}
+      </div>
 
       <h3 className="section-title" style={{ marginBottom: 10 }}>Product-wise Distribution</h3>
       <div className="subdivision-table-card" style={{ marginBottom: 28 }}>
         <table className="subdivision-table">
-          <thead><tr><th>Product</th><th>Total Issued</th><th>Total Distributed</th><th>Remaining</th></tr></thead>
+          <thead><tr><th>Product</th><th>Issued</th><th>Distributed</th><th>Remaining</th></tr></thead>
           <tbody>
             {byProduct.map((d) => (
               <tr key={d.productCode}>
@@ -143,7 +177,7 @@ export function SampleDistributionAnalytics() {
       <h3 className="section-title" style={{ marginBottom: 10 }}>Rep-wise Balance</h3>
       <div className="subdivision-table-card" style={{ marginBottom: 28 }}>
         <table className="subdivision-table">
-          <thead><tr><th>Representative</th><th>Total Issued</th><th>Total Distributed</th><th>Remaining</th></tr></thead>
+          <thead><tr><th>Representative</th><th>Issued</th><th>Distributed</th><th>Remaining</th></tr></thead>
           <tbody>
             {byRep.map((r) => (
               <tr key={r.employeeCode}>

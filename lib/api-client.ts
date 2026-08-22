@@ -5,7 +5,7 @@ import type { ApiEnvelope, CompanyBranch, CompanyDashboard, DcrExtended, Doctor,
 // "@zivira/types" directly — plain `import type { X } from "pkg"` does NOT
 // re-export X to this file's own consumers, which is what broke the
 // "declares 'Employee' locally, but it is not exported" Vercel build.
-export type { Employee };
+export type { Employee, Product };
 
 export type ProductCategory = {
   id: string;

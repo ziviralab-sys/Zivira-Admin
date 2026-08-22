@@ -13,6 +13,7 @@
 import { RefreshCw, Trophy, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/back-button";
+import { ExportMenuButton } from "@/components/export-menu-button";
 import { apiClient, type ManagerJointWorkRow, type RepAnalysisRow } from "@/lib/api-client";
 
 function tone(pct: number) {
@@ -45,13 +46,20 @@ export function RepManagerAnalysis() {
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
-          <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
+          <p className="subdivision-eyebrow">Rep vs Manager</p>
           <h2>Representative vs Manager Analysis</h2>
           <p>Identifies managers who are not adequately supporting their teams — doctors visited vs joint field visits, and manager joint-call ranking.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <BackButton fallback="/admin/analytics" />
           <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+          <ExportMenuButton
+            filename="rep-vs-manager"
+            sections={[
+              { title: "Representatives", headers: ["Representative", "Reporting Manager", "Doctors Visited", "Total Visits", "Joint Visits", "Joint Visit %"], rows: reps.map((r) => [r.employeeName ?? r.employeeCode, r.reportingManagerName ?? r.reportingManager ?? "—", r.doctorsVisited, r.totalVisits, r.jointVisits, `${r.jointVisitPercent}%`]) },
+              { title: "Manager Ranking", headers: ["Rank", "Manager", "Team Size", "Team Visits", "Total Joint Calls", "Avg Joint Calls/Rep", "Joint Call %"], rows: managers.map((m) => [m.rank, m.managerName ?? m.managerCode, m.teamSize, m.totalTeamVisits, m.totalJointCalls, m.avgJointCallsPerRep, `${m.jointCallPercent}%`]) }
+            ]}
+          />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}

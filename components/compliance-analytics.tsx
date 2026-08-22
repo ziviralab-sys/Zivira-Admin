@@ -13,13 +13,14 @@
 import { AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/back-button";
+import { ExportMenuButton } from "@/components/export-menu-button";
 import { apiClient, type ComplianceRow } from "@/lib/api-client";
 
 function MetricCard({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
   return (
-    <div className="card" style={{ padding: 16 }}>
-      <p className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{label}</p>
-      <p style={{ fontSize: 26, fontWeight: 700, color: tone ?? "var(--ink)" }}>{value}</p>
+    <div className="card" style={{ padding: 12 }}>
+      <p className="muted" style={{ fontSize: 11, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 20, fontWeight: 700, color: tone ?? "var(--ink)" }}>{value}</p>
     </div>
   );
 }
@@ -50,19 +51,32 @@ export function ComplianceAnalytics() {
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
-          <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
+          <p className="subdivision-eyebrow">Compliance</p>
           <h2>Attendance &amp; Compliance Analytics</h2>
-          <p>DCR submission discipline across the team, with automatic Chronic Defaulter detection (missed &gt; 5 days in the trailing 30).</p>
+          <p>DCR submission compliance and chronic-defaulter detection — live from field DCR records. Working days exclude Sundays.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <BackButton fallback="/admin/analytics" />
           <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+          <ExportMenuButton
+            filename="compliance-analytics"
+            sections={[{
+              title: "Compliance",
+              headers: ["Employee", "Code", "Role", "Today", "Missed Wk", "Missed Mo", "Compliance %", "Missed (30D)", "Warning", "Salary Hold"],
+              rows: rows.map((r) => [
+                r.employeeName ?? r.employeeCode, r.employeeCode, r.role ?? "—",
+                r.pendingDCR ? "Pending" : r.submittedToday ? "Submitted" : "—",
+                r.missedThisWeek, r.missedThisMonth, `${r.compliancePercent}%`,
+                r.missedLast30Days, r.warningLevel, r.salaryHold ? "Hold" : "—"
+              ])
+            }]}
+          />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
       {summary && (
-        <div className="grid grid-3" style={{ marginBottom: 24, gap: 12 }}>
+        <div className="grid" style={{ marginBottom: 24, gap: 12, gridTemplateColumns: "repeat(5, 1fr)" }}>
           <MetricCard label="Submitted Today" value={summary.submittedToday} tone="#15803d" />
           <MetricCard label="Pending DCR" value={summary.pendingDCR} tone="#a16207" />
           <MetricCard label="Missed Yesterday" value={summary.missedYesterday} tone="#b91c1c" />
@@ -75,9 +89,9 @@ export function ComplianceAnalytics() {
         <table className="subdivision-table">
           <thead>
             <tr>
-              <th>Employee</th><th>Role</th><th>Submitted Today</th><th>Pending DCR</th>
-              <th>Missed Yesterday</th><th>Missed This Week</th><th>Missed This Month</th>
-              <th>Compliance %</th><th>Status</th>
+              <th>Employee</th><th>Role</th><th>Today</th>
+              <th>Missed Wk</th><th>Missed Mo</th>
+              <th>Compliance %</th><th>Missed (30D)</th><th>Warning</th><th>Salary Hold</th>
             </tr>
           </thead>
           <tbody>
@@ -85,21 +99,21 @@ export function ComplianceAnalytics() {
               <tr key={r.employeeCode} style={r.chronicDefaulter ? { background: "#fef2f2" } : undefined}>
                 <td><strong style={{ color: "var(--ink)" }}>{r.employeeName ?? r.employeeCode}</strong> <span style={{ color: "var(--muted)", fontSize: 11 }}>({r.employeeCode})</span></td>
                 <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.role ?? "—"}</td>
-                <td>{r.submittedToday ? <span style={{ color: "#15803d", fontWeight: 700 }}>Submitted</span> : <span style={{ color: "var(--muted)" }}>—</span>}</td>
-                <td>{r.pendingDCR ? <span style={{ color: "#a16207", fontWeight: 700 }}>Pending</span> : <span style={{ color: "var(--muted)" }}>—</span>}</td>
-                <td>{r.missedYesterday ? <span style={{ color: "#b91c1c", fontWeight: 700 }}>Missed</span> : "—"}</td>
+                <td>{r.pendingDCR ? <span style={{ color: "#a16207", fontWeight: 700 }}>Pending</span> : r.submittedToday ? <span style={{ color: "#15803d", fontWeight: 700 }}>Submitted</span> : <span style={{ color: "var(--muted)" }}>—</span>}</td>
                 <td>{r.missedThisWeek}</td>
                 <td>{r.missedThisMonth}</td>
                 <td style={{ fontWeight: 700, color: r.compliancePercent < 70 ? "#b91c1c" : r.compliancePercent < 90 ? "#a16207" : "#15803d" }}>{r.compliancePercent}%</td>
+                <td>{r.missedLast30Days}</td>
                 <td>
-                  {r.chronicDefaulter ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#fee2e2", color: "#b91c1c", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
-                      <ShieldAlert size={12} /> Chronic Defaulter
-                    </span>
+                  {r.warningLevel === "NONE" ? (
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>—</span>
                   ) : (
-                    <span style={{ color: "var(--muted)", fontSize: 12 }}>OK</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: r.warningLevel === "HIGH" ? "#fee2e2" : r.warningLevel === "MEDIUM" ? "#fef9c3" : "#f3f4f6", color: r.warningLevel === "HIGH" ? "#b91c1c" : r.warningLevel === "MEDIUM" ? "#a16207" : "#6b7280", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
+                      <ShieldAlert size={12} /> {r.warningLevel}
+                    </span>
                   )}
                 </td>
+                <td>{r.salaryHold ? <span style={{ background: "#fee2e2", color: "#b91c1c", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>Hold</span> : <span style={{ color: "var(--muted)", fontSize: 12 }}>—</span>}</td>
               </tr>
             ))}
             {!loading && rows.length === 0 && (

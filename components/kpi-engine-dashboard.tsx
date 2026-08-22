@@ -13,6 +13,7 @@
 import { Gauge, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/back-button";
+import { ExportMenuButton } from "@/components/export-menu-button";
 import { apiClient, type ManagerKpi, type RepKpi } from "@/lib/api-client";
 
 export function KpiEngineDashboard() {
@@ -41,19 +42,50 @@ export function KpiEngineDashboard() {
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
-          <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
+          <p className="subdivision-eyebrow">KPIs</p>
           <h2>KPI Engine</h2>
-          <p>Automatically calculated Representative and Manager KPIs for the current month.</p>
+          <p>Automatically calculated rep and manager scorecards for this month.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <BackButton fallback="/admin/analytics" />
           <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+          <ExportMenuButton
+            filename="kpi-engine"
+            sections={[
+              { title: "Manager KPIs", headers: ["Manager", "Team Size", "Joint Call %", "Team Compliance %", "Doctor Coverage %", "Effectiveness Score"], rows: managers.map((m) => [m.managerName ?? m.managerCode, m.teamSize, `${m.jointCallPercent}%`, `${m.teamCompliancePercent}%`, `${m.doctorCoveragePercent}%`, m.managerEffectivenessScore]) },
+              { title: "Representative KPIs", headers: ["Representative", "Doctors Visited", "DCR Submitted", "Products Promoted", "Samples Distributed", "Conversion Rate", "Compliance %"], rows: reps.map((r) => [r.employeeName ?? r.employeeCode, r.doctorsVisited, r.dcrSubmitted, r.productsPromoted, r.samplesDistributed, `${r.conversionRatePercent}%`, `${r.compliancePercent}%`]) }
+            ]}
+          />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
-      <h3 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}><Gauge size={16} /> Representative KPIs</h3>
+      <h3 className="section-title" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}><Gauge size={16} /> Manager KPIs</h3>
       <div className="subdivision-table-card" style={{ marginBottom: 28 }}>
+        <table className="subdivision-table">
+          <thead>
+            <tr><th>Manager</th><th>Team Size</th><th>Joint Call %</th><th>Team Compliance %</th><th>Doctor Coverage %</th><th>Effectiveness Score</th></tr>
+          </thead>
+          <tbody>
+            {managers.map((m) => (
+              <tr key={m.managerCode}>
+                <td><strong style={{ color: "var(--ink)" }}>{m.managerName ?? m.managerCode}</strong></td>
+                <td>{m.teamSize}</td>
+                <td>{m.jointCallPercent}%</td>
+                <td>{m.teamCompliancePercent}%</td>
+                <td>{m.doctorCoveragePercent}%</td>
+                <td style={{ fontWeight: 700 }}>{m.managerEffectivenessScore}</td>
+              </tr>
+            ))}
+            {!loading && managers.length === 0 && (
+              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 32 }}>No manager KPI data yet.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 className="section-title" style={{ marginBottom: 10 }}>Representative KPIs</h3>
+      <div className="subdivision-table-card">
         <table className="subdivision-table">
           <thead>
             <tr><th>Representative</th><th>Doctors Visited</th><th>DCR Submitted</th><th>Products Promoted</th><th>Samples Distributed</th><th>Conversion Rate</th><th>Compliance %</th></tr>
@@ -72,30 +104,6 @@ export function KpiEngineDashboard() {
             ))}
             {!loading && reps.length === 0 && (
               <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--muted)", padding: 32 }}>No representative KPI data yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <h3 className="section-title" style={{ marginBottom: 10 }}>Manager KPIs</h3>
-      <div className="subdivision-table-card">
-        <table className="subdivision-table">
-          <thead>
-            <tr><th>Manager</th><th>Team Size</th><th>Joint Call %</th><th>Team Compliance %</th><th>Doctor Coverage %</th><th>Manager Effectiveness</th></tr>
-          </thead>
-          <tbody>
-            {managers.map((m) => (
-              <tr key={m.managerCode}>
-                <td><strong style={{ color: "var(--ink)" }}>{m.managerName ?? m.managerCode}</strong></td>
-                <td>{m.teamSize}</td>
-                <td>{m.jointCallPercent}%</td>
-                <td>{m.teamCompliancePercent}%</td>
-                <td>{m.doctorCoveragePercent}%</td>
-                <td style={{ fontWeight: 700 }}>{m.managerEffectivenessScore}%</td>
-              </tr>
-            ))}
-            {!loading && managers.length === 0 && (
-              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--muted)", padding: 32 }}>No manager KPI data yet.</td></tr>
             )}
           </tbody>
         </table>

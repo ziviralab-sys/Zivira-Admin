@@ -12,8 +12,10 @@
 //
 // New file — purely additive, does not touch any existing component.
 import { AlertOctagon, Filter, RefreshCw } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/back-button";
+import { ExportMenuButton } from "@/components/export-menu-button";
 import { apiClient, type TerritoryCoverageRow } from "@/lib/api-client";
 
 const BUCKET_LABEL: Record<string, string> = {
@@ -32,10 +34,14 @@ const BUCKET_TONE: Record<string, { bg: string; color: string }> = {
 };
 
 export function TerritoryCoverageAnalytics() {
+  const searchParams = useSearchParams();
+  const initialBucket = searchParams.get("bucket");
   const [rows, setRows] = useState<TerritoryCoverageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bucketFilter, setBucketFilter] = useState<string>("ALL");
+  // "Untouched Doctors" (BI Reports > Territory Reports) deep-links here
+  // with ?bucket=NEVER_VISITED so the filter is pre-applied on arrival.
+  const [bucketFilter, setBucketFilter] = useState<string>(initialBucket ?? "ALL");
 
   async function load() {
     setLoading(true);
@@ -59,13 +65,25 @@ export function TerritoryCoverageAnalytics() {
     <section className="subdivision-console">
       <div className="subdivision-head">
         <div>
-          <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
+          <p className="subdivision-eyebrow">Territory Coverage</p>
           <h2>Territory Coverage &amp; Doctor Exceptions</h2>
           <p>Doctors not visited for extended periods, with the documented reason (if the field team logged one) so nothing reads as unexplained neglect.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <BackButton fallback="/admin/analytics" />
           <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+          <ExportMenuButton
+            filename="territory-coverage"
+            sections={[{
+              title: "Territory Coverage",
+              headers: ["Doctor", "Assigned MR", "Last Visit", "Days Since", "Alert", "Exception Reason", "Notes"],
+              rows: visible.map((r) => [
+                r.doctorName, r.assignedMRName ?? r.assignedMR ?? "—",
+                r.lastVisitDateEver ? new Date(r.lastVisitDateEver).toLocaleDateString("en-IN") : "—",
+                r.daysSinceLastVisit ?? "—", r.alertBucket ?? "—", r.exceptionReason ?? "No reason logged", r.exceptionNotes ?? "—"
+              ])
+            }]}
+          />
         </div>
       </div>
       {error && <p className="form-error">{error}</p>}

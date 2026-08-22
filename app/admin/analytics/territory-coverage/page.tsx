@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { TerritoryCoverageAnalytics } from "@/components/territory-coverage-analytics";
 
 export default function TerritoryCoveragePage() {
-  return <TerritoryCoverageAnalytics />;
+  return (
+    <Suspense fallback={null}>
+      <TerritoryCoverageAnalytics />
+    </Suspense>
+  );
 }
