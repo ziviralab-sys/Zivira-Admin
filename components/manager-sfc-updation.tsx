@@ -57,7 +57,7 @@ export function ManagerSfcUpdation() {
       .then(([empRes, sfcRes, patchRes]) => {
         setEmployees(empRes.data.filter((e) => e.status !== "INACTIVE"));
         setSfcRows(sfcRes.data);
-        const names = patchRes
+        const names = patchRes.data
           .filter((r) => String((r as any).status ?? "ACTIVE") !== "INACTIVE")
           .map((r) => String((r as any).patchName ?? "").trim())
           .filter(Boolean);

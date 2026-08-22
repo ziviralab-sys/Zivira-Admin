@@ -90,7 +90,7 @@ export function ManagerWorkTypeAllowance() {
     const base = defaultGridForLevel(selectedLevel);
     try {
       const config = await apiClient.companyConfig();
-      const raw = config[configKeyForLevel(selectedLevel)];
+      const raw = config.data[configKeyForLevel(selectedLevel)];
       if (typeof raw === "string" && raw.trim()) {
         const stored = JSON.parse(raw) as Grid;
         for (const wt of Object.keys(stored)) {
