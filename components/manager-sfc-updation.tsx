@@ -107,6 +107,25 @@ export function ManagerSfcUpdation() {
     setActiveEmployee(selectedEmployee);
   }
 
+  function nextSourceSNo(list: Sfc[]): number {
+    // The "sfc" master's key field is sourceSNo (S.No) — the generic masters
+    // API rejects a create with no keyField value at all ("Missing required
+    // field(s): S.No"), which is exactly what happened here since routes
+    // added from this screen never had one. Auto-assign the next free
+    // number instead of asking the user to invent one.
+    const max = list.reduce((m, r) => {
+      const n = Number(r.sourceSNo);
+      return Number.isFinite(n) && n > m ? n : m;
+    }, 0);
+    return max + 1;
+  }
+
+  function clearAddRow() {
+    setNewToTerritory("");
+    setNewDistance("");
+    setActionError("");
+  }
+
   async function handleAddRoute() {
     if (!activeEmployee) return;
     if (!newToTerritory) {
@@ -116,14 +135,28 @@ export function ManagerSfcUpdation() {
     setActionError("");
     setSavingAdd(true);
     try {
-      await apiClient.createMasterRecord("sfc", {
+      const payload = {
         employeeName: activeEmployee.name,
         hq: activeEmployee.territory ?? "",
         patchName: newToTerritory,
         oneWayKms: newDistance.trim() ? Number(newDistance) : undefined,
         typeRaw: "Tour",
         status: "ACTIVE"
-      });
+      };
+      try {
+        await apiClient.createMasterRecord("sfc", { sourceSNo: nextSourceSNo(sfcRows), ...payload });
+      } catch (err) {
+        // The suggested S.No can go stale if another route was added
+        // elsewhere since this screen loaded — recompute against a fresh
+        // fetch and retry once instead of surfacing a confusing duplicate
+        // error for a number the user never typed.
+        if (err instanceof Error && /already exists/i.test(err.message)) {
+          const fresh = await apiClient.sfc();
+          await apiClient.createMasterRecord("sfc", { sourceSNo: nextSourceSNo(fresh.data), ...payload });
+        } else {
+          throw err;
+        }
+      }
       const sfcRes = await apiClient.sfc();
       setSfcRows(sfcRes.data);
       setNewToTerritory("");
@@ -404,24 +437,45 @@ export function ManagerSfcUpdation() {
                     />
                   </td>
                   <td style={{ padding: "8px 10px" }}>
-                    <button
-                      type="button"
-                      onClick={handleAddRoute}
-                      disabled={savingAdd || !newToTerritory}
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "6px",
-                        border: "1px solid var(--brand)",
-                        background: "var(--brand)",
-                        color: "#fff",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        cursor: savingAdd || !newToTerritory ? "not-allowed" : "pointer",
-                        opacity: savingAdd || !newToTerritory ? 0.6 : 1
-                      }}
-                    >
-                      {savingAdd ? "Adding..." : "Add"}
-                    </button>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={handleAddRoute}
+                        disabled={savingAdd || !newToTerritory}
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid var(--brand)",
+                          background: "var(--brand)",
+                          color: "#fff",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          cursor: savingAdd || !newToTerritory ? "not-allowed" : "pointer",
+                          opacity: savingAdd || !newToTerritory ? 0.6 : 1
+                        }}
+                      >
+                        {savingAdd ? "Adding..." : "Add"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearAddRow}
+                        disabled={savingAdd || (!newToTerritory && !newDistance)}
+                        title="Clear this row"
+                        style={{
+                          padding: "4px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #fecaca",
+                          background: "#fef2f2",
+                          color: "#b91c1c",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          cursor: savingAdd ? "not-allowed" : "pointer",
+                          opacity: !newToTerritory && !newDistance ? 0.6 : 1
+                        }}
+                      >
+                        Del
+                      </button>
+                    </div>
                   </td>
                 </tr>
 

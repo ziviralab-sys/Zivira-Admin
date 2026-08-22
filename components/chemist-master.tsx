@@ -14,6 +14,15 @@ type ChemistRow = {
   status: "Active" | "Inactive";
 };
 const initialChemists: ChemistRow[] = [];
+// Chemist Code must read like "CH001", not the bare backing sourceSNo
+// number — every place that shows or suggests a code needs to go through
+// this one formatter so the table, the Add form's suggestion, and the Edit
+// form's read-only display never drift out of sync with each other again.
+function formatChemistCode(sourceSNo: unknown): string {
+  const n = Number(sourceSNo);
+  if (!Number.isFinite(n) || n <= 0) return "-";
+  return `CH${String(n).padStart(3, "0")}`;
+}
 export function ChemistMaster() {
   const [list, setList] = useState<any[]>([]);
   const [view, setView] = useState<"list" | "add" | "edit">("list");
@@ -74,7 +83,7 @@ export function ChemistMaster() {
       const n = Number(r.sourceSNo);
       return Number.isFinite(n) && n > max ? n : max;
     }, 0);
-    const nextCode = `CHM${String(maxSNo + 1).padStart(3, "0")}`;
+    const nextCode = formatChemistCode(maxSNo + 1);
     setForm({
       code: nextCode,
       name: "",
@@ -103,7 +112,7 @@ export function ChemistMaster() {
   function handleEdit(row: any) {
     setSelectedChemist(row);
     setForm({
-      code: row.sourceSNo ? String(row.sourceSNo) : "",
+      code: row.sourceSNo ? formatChemistCode(row.sourceSNo) : "",
       name: row.dealerName || "",
       type: "Retailer", // Defaulting as dealer doesn't have type
       city: row.city || "Chennai",
@@ -208,7 +217,7 @@ export function ChemistMaster() {
       (statusFilter === "Inactive" && !isActive);
     const nameStr = (x.dealerName || "").toLowerCase();
     const mrStr = (x.employeeName || x.employeeCode || "").toLowerCase();
-    const codeStr = (x.sourceSNo ? String(x.sourceSNo) : "").toLowerCase();
+    const codeStr = formatChemistCode(x.sourceSNo).toLowerCase();
     const searchMatch = nameStr.includes(s) || mrStr.includes(s) || codeStr.includes(s);
     let colMatch = true;
     for (const [key, val] of Object.entries(columnFilters)) {
@@ -564,7 +573,7 @@ export function ChemistMaster() {
                 {filtered.map((row, idx) => (
                   <tr key={row.id}>
                     <td style={{ color: "var(--muted)", fontWeight: 500 }}>{idx + 1}</td>
-                    <td style={{ fontWeight: 600 }}>{row.sourceSNo || "-"}</td>
+                    <td style={{ fontWeight: 600 }}>{formatChemistCode(row.sourceSNo)}</td>
                     <td><strong>{row.dealerName}</strong></td>
                     <td>{row.type || "Retailer"}</td>
                     <td>{row.city || "-"}</td>

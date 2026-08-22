@@ -49,7 +49,7 @@ export function ListedDoctorMaster() {
     name: "",
     specialty: "Ophthalmology",
     qualification: "MBBS, MD",
-    category: "General",
+    category: "C",
     mobile: "9876543210",
     city: "Chennai",
     status: "Active" as "Active" | "Inactive",
@@ -89,7 +89,7 @@ export function ListedDoctorMaster() {
       name: "",
       specialty: "Ophthalmology",
       qualification: "MBBS, MD",
-      category: "General",
+      category: "C",
       mobile: "",
       city: "Chennai",
       status: "Active",
@@ -119,7 +119,7 @@ export function ListedDoctorMaster() {
       name: row.name || "",
       specialty: row.specialty || "Ophthalmology",
       qualification: row.qualification || "MBBS, MD",
-      category: row.category || "General",
+      category: (["A", "B", "C"].includes(row.category) ? row.category : "C"),
       mobile: row.phone || row.mobile || "",
       city: row.city || "Chennai",
       status: row.status || "Active",
@@ -144,6 +144,13 @@ export function ListedDoctorMaster() {
   }
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    // The Status dropdown shows/stores "Active"/"Inactive" for display, but
+    // the backend's zod schema only accepts "ACTIVE"/"INACTIVE" — casting
+    // the string with `as` doesn't transform it, it just lies to the type
+    // checker, so every save was actually sending "Active" and failing with
+    // "Invalid enum value. Expected 'ACTIVE' | 'INACTIVE', received 'Active'".
+    // Convert the real value here instead.
+    const apiStatus: "ACTIVE" | "INACTIVE" = form.status === "Active" ? "ACTIVE" : "INACTIVE";
     try {
       if (view === "add") {
         try {
@@ -155,7 +162,7 @@ export function ListedDoctorMaster() {
             state: form.state,
             city: form.city,
             territory: form.patch,
-            status: form.status as "ACTIVE" | "INACTIVE"
+            status: apiStatus
           });
         } catch (err: any) {
           // The suggested code can go stale if another doctor was added
@@ -173,7 +180,7 @@ export function ListedDoctorMaster() {
               state: form.state,
               city: form.city,
               territory: form.patch,
-              status: form.status as "ACTIVE" | "INACTIVE"
+              status: apiStatus
             });
           } else {
             throw err;
@@ -302,7 +309,11 @@ export function ListedDoctorMaster() {
               </div>
               <div className="field">
                 <label>Category</label>
-                <input required value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="General" />
+                <select required value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
               </div>
               <div className="field">
                 <label>Mobile Number</label>
@@ -353,7 +364,11 @@ export function ListedDoctorMaster() {
             <>
               <div className="field">
                 <label>Doctor Category</label>
-                <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="General" />
+                <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
               </div>
               <div className="field">
                 <label>Potential</label>

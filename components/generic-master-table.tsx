@@ -527,8 +527,19 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
   // field blank instead of pre-selected, and it's easy to submit without
   // ever noticing there was a status field to fill in.
   function isActiveInactiveField(f: MasterField): boolean {
-    if (f.key === "status" || f.key === "active") return true;
-    return !!f.options && f.options.length === 2 && f.options.includes("Active") && f.options.includes("Inactive");
+    // A field's own declared options are the source of truth when present —
+    // some masters key their status column "status" but give it a totally
+    // different fixed choice list (Manager Expense - Travel Approval and
+    // Expense Approval use ["Approved","Pending","Rejected"], not
+    // Active/Inactive). Defaulting those to "Active" on Add made every save
+    // fail with "Status must be one of: Approved, Pending, Rejected" since
+    // "Active" was never a legal value for that field. Only fall back to the
+    // key-name heuristic for a synthetic status column with no options at
+    // all (e.g. Doctor - Dealer Mapping's client-appended Active/Inactive).
+    if (f.options && f.options.length) {
+      return f.options.length === 2 && f.options.includes("Active") && f.options.includes("Inactive");
+    }
+    return f.key === "status" || f.key === "active";
   }
 
   // Renders Active/Inactive values as a colored pill (green/red) instead of
@@ -925,16 +936,25 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                   .filter((f: any) => !(masterKey === "doctorAdditionalInfo" && f.key === "longitude"))
                   .map((f: MasterField) => {
                   let opts = optionsFor(f);
-                  // Doctor — Additional Info's Doctor Code field lists every
-                  // doctor from Doctor Master, but this master's own keyField
-                  // is doctorCode — one Additional Info record per doctor. Add
-                  // was offering doctors who already had a record, so picking
-                  // one and saving always 409'd with "A record with this
-                  // doctorCode already exists". On Add, narrow the list to
-                  // doctors that don't have an Additional Info record yet; on
-                  // Edit, keep the row's own already-assigned code selectable.
-                  if (masterKey === "doctorAdditionalInfo" && f.key === "doctorCode" && opts && !isEdit) {
-                    const taken = new Set(rows.map((r) => String((r as any).doctorCode)));
+                  // Any master whose single key field is itself a lookup into
+                  // another master (Doctor Code, Stockist Code, "Stockist"...)
+                  // is a "one record per parent" tab — Doctor - Additional
+                  // Info, Doctor - Classification, every Stockist - * sub-tab,
+                  // etc. Their Add dropdown used to list every doctor/stockist
+                  // from the parent master regardless of whether it already
+                  // had a record here, so picking an already-used one always
+                  // 409'd with "A record with this <field> already exists".
+                  // Narrow the list, on Add only, to values that don't have a
+                  // record yet; Edit keeps the row's own already-assigned
+                  // value selectable (opts already includes it there).
+                  if (
+                    schema.keyFields.length === 1 &&
+                    schema.keyFields[0] === f.key &&
+                    f.sourceMaster &&
+                    opts &&
+                    !isEdit
+                  ) {
+                    const taken = new Set(rows.map((r) => String((r as any)[f.key])));
                     opts = opts.filter((code) => !taken.has(code));
                   }
                   const commonStyle: CSSProperties = {
