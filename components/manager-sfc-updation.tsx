@@ -141,7 +141,14 @@ export function ManagerSfcUpdation() {
         patchName: newToTerritory,
         oneWayKms: newDistance.trim() ? Number(newDistance) : undefined,
         typeRaw: "Tour",
-        status: "ACTIVE"
+        // The masters registry validates this field against
+        // ACTIVE_INACTIVE = ["Active", "Inactive"] (Title Case) — sending
+        // "ACTIVE" (all caps, matching the Mongoose model's own storage
+        // enum) fails that validation with "Status must be one of: Active,
+        // Inactive" even though the value is semantically correct. Every
+        // other master-creating screen in this codebase sends "Active" for
+        // the same reason (see generic-master-table.tsx's own default).
+        status: "Active"
       };
       try {
         await apiClient.createMasterRecord("sfc", { sourceSNo: nextSourceSNo(sfcRows), ...payload });

@@ -2110,10 +2110,17 @@ tr:last-child td {
   }
 }
 
-/* ── Collapsible sidebar ── */
+/* ── Collapsible sidebar ──
+   NOTE: this rule used to set `overflow: hidden` here, which — because it
+   comes later in the cascade than the base `.sidebar` rule above (same
+   specificity, later wins) — silently clobbered that rule's
+   `overflow-y: auto`, leaving the expanded sidebar with no scrollbar at
+   all once the nav list grew past the viewport height (e.g. every
+   Analytics & BI link added below). The collapsed state already gets its
+   own `overflow: hidden` from `.sidebar-collapsed` below, so this rule
+   only needs the transition. */
 .sidebar {
   transition: width 0.25s cubic-bezier(.4,0,.2,1);
-  overflow: hidden;
 }
 
 .app-shell:has(.sidebar-collapsed) {
