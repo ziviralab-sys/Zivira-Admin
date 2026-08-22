@@ -592,7 +592,7 @@ export function ChemistMaster() {
                     </td>
                     <td>
                       <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Deactivate" type="button">
-                        <Ban />
+                        <Ban size={15} />
                       </button>
                     </td>
                   </tr>

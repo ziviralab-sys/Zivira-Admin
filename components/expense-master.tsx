@@ -6,6 +6,12 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [sfcRows, setSfcRows] = useState<Sfc[]>([]);
   const [expenseRows, setExpenseRows] = useState<Expense[]>([]);
+  // "Work Type Wise - Allowance Fix" has no dedicated backing collection —
+  // it's built on demand from the real SFC routes (typeRaw already carries
+  // Tour/Outstation Work/Outstation Excursion/Admin, which is exactly the
+  // HQ/EX/OS/Admin split this tab needs) rather than eagerly fetched, so
+  // the table only appears once HR/Admin explicitly asks for it via Go.
+  const [worktypeGenerated, setWorktypeGenerated] = useState(false);
   useEffect(() => {
     if (!embed) return;
     apiClient.sfc().then(res => setSfcRows(res.data)).catch(() => setSfcRows([]));
@@ -38,23 +44,36 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
   if (embed) {
     return (
       <>
-        <div style={{ display: "flex", gap: "8px", overflowX: "auto", padding: "8px 0", marginBottom: "20px", borderBottom: "1px solid var(--border)", WebkitOverflowScrolling: "touch" }}>
-          {[
-            { id: "sfc", label: "SFC Updation" },
-            { id: "allowance", label: "Allowance Fixation" },
-            { id: "worktype", label: "Work Type Wise - Allowance Fix" },
-            { id: "fixedvar", label: "Fixed / Variable Expense Parameter" }
-          ].map((t) => (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "8px 0", marginBottom: "20px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", gap: "8px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            {[
+              { id: "sfc", label: "SFC Updation" },
+              { id: "allowance", label: "Allowance Fixation" },
+              { id: "worktype", label: "Work Type Wise - Allowance Fix" },
+              { id: "fixedvar", label: "Fixed / Variable Expense Parameter" }
+            ].map((t) => (
+              <button
+                key={t.id}
+                className={`button ${activeTab === t.id ? "" : "button-secondary"}`}
+                onClick={() => setActiveTab(t.id)}
+                style={{ whiteSpace: "nowrap", padding: "6px 12px", fontSize: "12px" }}
+                type="button"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {activeTab === "worktype" && (
             <button
-              key={t.id}
-              className={`button ${activeTab === t.id ? "" : "button-secondary"}`}
-              onClick={() => setActiveTab(t.id)}
-              style={{ whiteSpace: "nowrap", padding: "6px 12px", fontSize: "12px" }}
               type="button"
+              className="button"
+              onClick={() => setWorktypeGenerated(true)}
+              style={{ whiteSpace: "nowrap", padding: "6px 16px", fontSize: "12px", flexShrink: 0 }}
+              title="Generate the Work Type Wise Allowance table from the current SFC routes"
             >
-              {t.label}
+              Go
             </button>
-          ))}
+          )}
         </div>
         {activeTab === "sfc" && (
           <div>
@@ -123,23 +142,41 @@ export function ExpenseMaster({ defaultTab = "sfc", embed = false }: { defaultTa
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
               <h3 style={{ fontSize: "15px", fontWeight: 700 }}>Work Type Allowance Details (Attendance Basis)</h3>
             </div>
-            <div className="subdivision-table-card">
-              <table className="subdivision-table">
-                <thead>
-                  <tr>
-                    <th>Attendance Status</th>
-                    <th>HQ Allowance Type</th>
-                    <th>EX Allowance Type</th>
-                    <th>OS Allowance Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* No source for attendance-status-keyed allowance types anywhere in the
-                      imported data (Attendance/Expense collections don't carry this
-                      breakdown) - left empty rather than fabricated. */}
-                </tbody>
-              </table>
-            </div>
+            {!worktypeGenerated ? (
+              <div className="subdivision-table-card" style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>
+                Click <strong>Go</strong> above to generate this table from the current SFC routes.
+              </div>
+            ) : (
+              <div className="subdivision-table-card">
+                <table className="subdivision-table">
+                  <thead>
+                    <tr>
+                      <th>Attendance Status</th>
+                      <th>HQ Allowance Type</th>
+                      <th>EX Allowance Type</th>
+                      <th>OS Allowance Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Built from real SFC routes — typeRaw ("Tour", "Outstation Work",
+                        "Outstation Excursion", "Admin") is the closest real field to an
+                        attendance-work-type split, so each route becomes one row instead
+                        of fabricating figures with no backing data. */}
+                    {sfcRows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.employeeName ?? row.employeeCode ?? "—"}</td>
+                        <td>{row.typeRaw === "Tour" ? `HQ · ${row.oneWayKms ?? "—"} km` : "—"}</td>
+                        <td>{row.typeRaw === "Outstation Excursion" ? `EX · ${row.oneWayKms ?? "—"} km` : "—"}</td>
+                        <td>{row.typeRaw === "Outstation Work" ? `OS · ${row.oneWayKms ?? "—"} km` : "—"}</td>
+                      </tr>
+                    ))}
+                    {sfcRows.length === 0 && (
+                      <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--muted)", padding: "24px" }}>No SFC records found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
         {activeTab === "fixedvar" && (

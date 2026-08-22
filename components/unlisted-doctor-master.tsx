@@ -540,7 +540,7 @@ export function UnlistedDoctorMaster() {
                     </td>
                     <td>
                       <button className="subdivision-danger-button" onClick={() => handleDelete(row.id)} title="Reject" type="button">
-                        <Ban />
+                        <Ban size={15} />
                       </button>
                     </td>
                   </tr>

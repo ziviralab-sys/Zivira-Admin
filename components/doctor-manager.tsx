@@ -280,7 +280,7 @@ export function DoctorManager() {
                 </td>
                 <td>
                   <button className="subdivision-danger-button" onClick={() => handleDeactivate(row.id)} type="button" disabled={row.status === "Inactive"}>
-                    <Ban />
+                    <Ban size={15} />
                   </button>
                 </td>
               </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Plus, Pencil, Ban, Download, X, AlertTriangle, FileSpreadsheet, FileText, Sheet } from "lucide-react";
+import { RotateCcw, Plus, Pencil, Ban, Download, X, AlertTriangle, FileText, Sheet } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { apiClient, type MasterField, type MasterRecord, type MasterSchema } from "@/lib/api-client";
@@ -136,6 +136,13 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
   // Full records per source master (not just distinct values), used to look up
   // a computed field's display value (e.g. Doctor Name from a chosen Doctor Code).
   const [sourceRecords, setSourceRecords] = useState<Record<string, MasterRecord[]>>({});
+  // Doctor — Additional Info's Add/Edit form replaces the raw Latitude /
+  // Longitude number inputs with a single clickable "Map" box: clicking it
+  // asks the browser to capture the device's current GPS location (instead
+  // of typing coordinates by hand) and stores lat/lng straight onto the
+  // form row, same as before — only how they're captured changed.
+  const [capturingLocation, setCapturingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // "Reporting Structure" is a toggle on the same screen as Manager Expense
   // — Reports, but it's backed by a genuinely different table (division's
@@ -553,6 +560,43 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     return String(raw ?? "");
   }
 
+  // Asks the browser for the device's current GPS position and writes it
+  // straight onto the open form row's latitude/longitude — this is what the
+  // Doctor — Additional Info form's Map box calls when clicked, replacing
+  // manual Latitude/Longitude typing with a single "capture my location" tap.
+  function captureLocation() {
+    if (!formRow) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationError("Location capture isn't supported in this browser.");
+      return;
+    }
+    setLocationError(null);
+    setCapturingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormRow((prev) =>
+          prev
+            ? {
+                ...prev,
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              }
+            : prev
+        );
+        setCapturingLocation(false);
+      },
+      (geoError) => {
+        setLocationError(
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Location permission was denied. Allow location access and try again."
+            : "Couldn't capture the current location. Please try again."
+        );
+        setCapturingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }
+
   async function openAddForm() {
     const codeField = autoCodeField();
     // Recompute against a fresh fetch rather than whatever `rows` happened
@@ -580,10 +624,12 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
         blank[f.key] = "";
       }
     }
+    setLocationError(null);
     setFormRow(blank);
   }
 
   function openEditForm(row: MasterRecord) {
+    setLocationError(null);
     setFormRow({ ...row });
   }
 
@@ -696,45 +742,70 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     return { headers, rows: dataRows };
   }
 
-  function exportToCSV() {
-    if (!schema || rows.length === 0) return;
-    const { headers, rows: dataRows } = buildExportMatrix();
-    const csvRows = dataRows.map((r) => r.map((val) => `"${val.replace(/"/g, '""')}"`).join(","));
-    const csvString = [headers.join(","), ...csvRows].join("\n");
-    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `${schema.title || masterKey}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
+  // Excel column widths are sized from the actual longest value in each
+  // column (header included) rather than a fixed guess, so a short "Status"
+  // column stays narrow while a long "Description" column doesn't clip —
+  // matches the export text to the exact data instead of hiding it behind a
+  // fixed-width cell.
   async function exportToExcel() {
     if (!schema || rows.length === 0) return;
     const { headers, rows: dataRows } = buildExportMatrix();
     const XLSX = await import("xlsx");
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+    worksheet["!cols"] = headers.map((h, colIdx) => {
+      const longest = dataRows.reduce((max, r) => Math.max(max, (r[colIdx] ?? "").length), h.length);
+      // Clamp so one very long free-text cell can't blow the sheet out to an
+      // unreadable width; Excel still wraps/truncates gracefully within a cell.
+      return { wch: Math.min(Math.max(longest + 2, 10), 60) };
+    });
+    worksheet["!rows"] = [{ hpt: 20 }];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, (schema.title || masterKey).slice(0, 31));
     XLSX.writeFile(workbook, `${schema.title || masterKey}.xlsx`);
   }
 
+  // PDF export: column widths are computed from content length too (not left
+  // to autoTable's default even split), text wraps onto multiple lines
+  // instead of being clipped, and the page switches to landscape + a smaller
+  // font as column count grows so wide masters (many fields) still fit
+  // on the page without any column's text spilling into its neighbor.
   async function exportToPDF() {
     if (!schema || rows.length === 0) return;
     const { headers, rows: dataRows } = buildExportMatrix();
     const { jsPDF } = await import("jspdf");
     const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF({ orientation: headers.length > 6 ? "landscape" : "portrait" });
+    const isWide = headers.length > 6;
+    const fontSize = headers.length > 12 ? 6.5 : headers.length > 8 ? 7.5 : 8.5;
+    const doc = new jsPDF({ orientation: isWide ? "landscape" : "portrait", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 28;
+    const usableWidth = pageWidth - margin * 2;
+
+    // Proportional column widths from the longest value per column, then
+    // scaled so the total exactly fills the usable page width — this is what
+    // keeps every header aligned directly above its own data instead of
+    // drifting once the table is narrower or wider than the page.
+    const rawWidths = headers.map((h, colIdx) =>
+      Math.max(h.length, ...dataRows.map((r) => (r[colIdx] ?? "").length), 3)
+    );
+    const totalRaw = rawWidths.reduce((a, b) => a + b, 0) || 1;
+    const columnStyles: Record<number, { cellWidth: number }> = {};
+    headers.forEach((_, colIdx) => {
+      columnStyles[colIdx] = { cellWidth: (rawWidths[colIdx] / totalRaw) * usableWidth };
+    });
+
     doc.setFontSize(13);
-    doc.text(schema.title || masterKey, 14, 15);
+    doc.text(schema.title || masterKey, margin, 20);
     autoTable(doc, {
       head: [headers],
       body: dataRows,
-      startY: 20,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [230, 81, 0] }
+      startY: 28,
+      margin: { left: margin, right: margin },
+      tableWidth: usableWidth,
+      styles: { fontSize, cellPadding: 4, overflow: "linebreak", valign: "middle" },
+      headStyles: { fillColor: [230, 81, 0], textColor: [255, 255, 255], fontStyle: "bold", halign: "left" },
+      bodyStyles: { halign: "left" },
+      columnStyles
     });
     doc.save(`${schema.title || masterKey}.pdf`);
   }
@@ -803,12 +874,62 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                 </button>
               </div>
               <div className="subdivision-form-card" style={{ boxShadow: "none", padding: 0 }}>
-                {schema.fields.filter((f: any) => !f.tableOnly).map((f: MasterField) => {
+                {schema.fields
+                  .filter((f: any) => !f.tableOnly)
+                  // Doctor — Additional Info: Longitude is captured together
+                  // with Latitude by the single Map box below, so it doesn't
+                  // get its own separate field row in the form.
+                  .filter((f: any) => !(masterKey === "doctorAdditionalInfo" && f.key === "longitude"))
+                  .map((f: MasterField) => {
                   const opts = optionsFor(f);
                   const commonStyle: CSSProperties = {
                     width: "100%", padding: "8px 12px", borderRadius: "6px",
                     border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)"
                   };
+                  if (masterKey === "doctorAdditionalInfo" && f.key === "latitude") {
+                    const lat = formRow["latitude"];
+                    const lon = formRow["longitude"];
+                    const hasLocation = lat !== undefined && lat !== null && String(lat).trim() !== "" &&
+                      lon !== undefined && lon !== null && String(lon).trim() !== "";
+                    const mapImgSrc = hasLocation
+                      ? `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=460x160&markers=${lat},${lon},red-pushpin`
+                      : "";
+                    return (
+                      <label className="field" key="map-box" style={{ display: "block", marginBottom: "12px" }}>
+                        <span style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>
+                          Map
+                        </span>
+                        <button
+                          type="button"
+                          onClick={captureLocation}
+                          disabled={capturingLocation}
+                          title={hasLocation ? "Click to re-capture the current location" : "Click to capture the current location"}
+                          style={{
+                            width: "100%", padding: 0, borderRadius: "8px",
+                            border: "1px dashed var(--line)", background: "var(--panel)",
+                            cursor: capturingLocation ? "wait" : "pointer", overflow: "hidden",
+                            display: "block"
+                          }}
+                        >
+                          {hasLocation ? (
+                            <img
+                              src={mapImgSrc}
+                              alt="Captured location"
+                              style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }}
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <div style={{ height: "160px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px", color: "var(--muted)", fontSize: "13px" }}>
+                              <span>{capturingLocation ? "Capturing location…" : "Click to capture the current location"}</span>
+                            </div>
+                          )}
+                        </button>
+                        {locationError && (
+                          <span style={{ display: "block", marginTop: "4px", fontSize: "12px", color: "#ef4444" }}>{locationError}</span>
+                        )}
+                      </label>
+                    );
+                  }
                   return (
                     <label className="field" key={f.key} style={{ display: "block", marginBottom: "12px" }}>
                       <span style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>
@@ -892,9 +1013,6 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                 </button>
                 <button type="button" onClick={() => { exportToPDF(); setExportMenuOpen(false); }} className="export-menu-option" style={exportMenuOptionStyle}>
                   <FileText size={15} /> PDF
-                </button>
-                <button type="button" onClick={() => { exportToCSV(); setExportMenuOpen(false); }} className="export-menu-option" style={exportMenuOptionStyle}>
-                  <FileSpreadsheet size={15} /> CSV
                 </button>
               </div>
             )}
@@ -992,7 +1110,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                   {!isReadonly && (
                     <td>
                       <button className="subdivision-danger-button" onClick={() => setDeleteTarget(row)} type="button" title="Deactivate">
-                        <Ban />
+                        <Ban size={15} />
                       </button>
                     </td>
                   )}
