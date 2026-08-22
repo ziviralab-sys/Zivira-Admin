@@ -1,5 +1,12 @@
 import type { ApiEnvelope, CompanyBranch, CompanyDashboard, DcrExtended, Doctor, DoctorCoverageRow, Employee, Product, TourPlan } from "@zivira/types";
 
+// Re-exported so other modules (e.g. manager-sfc-updation.tsx) can import
+// Employee straight from "@/lib/api-client" instead of reaching into
+// "@zivira/types" directly — plain `import type { X } from "pkg"` does NOT
+// re-export X to this file's own consumers, which is what broke the
+// "declares 'Employee' locally, but it is not exported" Vercel build.
+export type { Employee };
+
 export type ProductCategory = {
   id: string;
   shortName?: string | null;
