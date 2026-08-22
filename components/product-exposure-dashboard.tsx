@@ -4,11 +4,14 @@
 // Topic 10 — Product-wise Performance Dashboard
 //
 // Answers the doc's questions directly: which product is promoted most /
-// ignored, which representative promotes it, which region performs best.
+// ignored, which representative promotes it, which territory performs
+// best. Field names match src/utils/product-analytics.ts's
+// ProductExposureRow exactly.
 //
 // New file — purely additive, does not touch any existing component.
 import { PackageSearch, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type ProductExposureRow } from "@/lib/api-client";
 
 export function ProductExposureDashboard() {
@@ -31,7 +34,9 @@ export function ProductExposureDashboard() {
 
   useEffect(() => { void load(); }, []);
 
-  const sorted = [...rows].sort((a, b) => b.doctorsCovered - a.doctorsCovered);
+  // Backend already sorts by totalSamplesGiven desc — re-sort defensively
+  // in case a future backend change drops that ordering.
+  const sorted = [...rows].sort((a, b) => b.totalSamplesGiven - a.totalSamplesGiven);
   const mostPromoted = sorted[0];
   const leastPromoted = sorted[sorted.length - 1];
 
@@ -41,9 +46,12 @@ export function ProductExposureDashboard() {
         <div>
           <p className="subdivision-eyebrow">SFA Analytics &amp; BI</p>
           <h2>Product Exposure &amp; Performance</h2>
-          <p>Which products are promoted most/least, doctor coverage, and prescription-interest signal per product.</p>
+          <p>Which products are promoted most/least, doctor and rep coverage, top performing territory/manager, and prescription-interest signal per product.</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
@@ -52,12 +60,12 @@ export function ProductExposureDashboard() {
           <div className="card" style={{ padding: 16 }}>
             <p className="muted" style={{ fontSize: 12 }}>Most promoted product</p>
             <p style={{ fontSize: 20, fontWeight: 700, color: "#15803d" }}>{mostPromoted?.productName}</p>
-            <p style={{ fontSize: 12, color: "var(--muted)" }}>{mostPromoted?.doctorsCovered} doctors covered</p>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>{mostPromoted?.totalSamplesGiven} samples given · {mostPromoted?.distinctDoctors} doctors</p>
           </div>
           <div className="card" style={{ padding: 16 }}>
             <p className="muted" style={{ fontSize: 12 }}>Least promoted product</p>
             <p style={{ fontSize: 20, fontWeight: 700, color: "#b91c1c" }}>{leastPromoted?.productName}</p>
-            <p style={{ fontSize: 12, color: "var(--muted)" }}>{leastPromoted?.doctorsCovered} doctors covered</p>
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>{leastPromoted?.totalSamplesGiven} samples given · {leastPromoted?.distinctDoctors} doctors</p>
           </div>
         </div>
       )}
@@ -66,26 +74,29 @@ export function ProductExposureDashboard() {
         <table className="subdivision-table">
           <thead>
             <tr>
-              <th>Product</th><th>Doctors Covered</th><th>Samples Given</th>
-              <th>High Interest</th><th>Medium Interest</th><th>Low Interest</th>
-              <th>Top Representative</th><th>Top Region</th>
+              <th>Product</th><th>Samples Given</th><th>Doctors Covered</th><th>Reps Promoting</th>
+              <th>High Interest</th><th>Medium</th><th>Low</th><th>None</th>
+              <th>Top Rep</th><th>Top Territory</th><th>Top Manager</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((r) => (
-              <tr key={r.productCode ?? r.productName}>
+              <tr key={r.productCode}>
                 <td><strong style={{ color: "var(--ink)" }}>{r.productName}</strong></td>
-                <td>{r.doctorsCovered}</td>
-                <td>{r.samplesGiven}</td>
-                <td style={{ color: "#15803d" }}>{r.prescriptionInterestHigh ?? 0}</td>
-                <td style={{ color: "#a16207" }}>{r.prescriptionInterestMedium ?? 0}</td>
-                <td style={{ color: "#b91c1c" }}>{r.prescriptionInterestLow ?? 0}</td>
-                <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.topRepresentative ?? "—"}</td>
-                <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.topRegion ?? "—"}</td>
+                <td>{r.totalSamplesGiven}</td>
+                <td>{r.distinctDoctors}</td>
+                <td>{r.distinctReps}</td>
+                <td style={{ color: "#15803d" }}>{r.prescriptionInterestHigh}</td>
+                <td style={{ color: "#a16207" }}>{r.prescriptionInterestMedium}</td>
+                <td style={{ color: "#b91c1c" }}>{r.prescriptionInterestLow}</td>
+                <td style={{ color: "var(--muted)" }}>{r.prescriptionInterestNone}</td>
+                <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.topRepName ? `${r.topRepName} (${r.topRepQty})` : "—"}</td>
+                <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.topTerritory ? `${r.topTerritory} (${r.topTerritoryQty})` : "—"}</td>
+                <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.topManagerName ? `${r.topManagerName} (${r.topManagerQty})` : "—"}</td>
               </tr>
             ))}
             {!loading && rows.length === 0 && (
-              <tr><td colSpan={8} style={{ textAlign: "center", color: "var(--muted)", padding: 40 }}>
+              <tr><td colSpan={11} style={{ textAlign: "center", color: "var(--muted)", padding: 40 }}>
                 <PackageSearch size={28} style={{ margin: "0 auto 8px", display: "block", opacity: 0.3 }} />
                 No product exposure data yet.
               </td></tr>

@@ -12,6 +12,7 @@
 // New file — purely additive, does not touch any existing component.
 import { AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type ComplianceRow } from "@/lib/api-client";
 
 function MetricCard({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
@@ -53,7 +54,10 @@ export function ComplianceAnalytics() {
           <h2>Attendance &amp; Compliance Analytics</h2>
           <p>DCR submission discipline across the team, with automatic Chronic Defaulter detection (missed &gt; 5 days in the trailing 30).</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
@@ -79,7 +83,7 @@ export function ComplianceAnalytics() {
           <tbody>
             {rows.map((r) => (
               <tr key={r.employeeCode} style={r.chronicDefaulter ? { background: "#fef2f2" } : undefined}>
-                <td><strong style={{ color: "var(--ink)" }}>{r.employeeName ?? r.name ?? r.employeeCode}</strong> <span style={{ color: "var(--muted)", fontSize: 11 }}>({r.employeeCode})</span></td>
+                <td><strong style={{ color: "var(--ink)" }}>{r.employeeName ?? r.employeeCode}</strong> <span style={{ color: "var(--muted)", fontSize: 11 }}>({r.employeeCode})</span></td>
                 <td style={{ fontSize: 12, color: "var(--muted)" }}>{r.role ?? "—"}</td>
                 <td>{r.submittedToday ? <span style={{ color: "#15803d", fontWeight: 700 }}>Submitted</span> : <span style={{ color: "var(--muted)" }}>—</span>}</td>
                 <td>{r.pendingDCR ? <span style={{ color: "#a16207", fontWeight: 700 }}>Pending</span> : <span style={{ color: "var(--muted)" }}>—</span>}</td>

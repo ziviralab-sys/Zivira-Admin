@@ -2,14 +2,17 @@
 // components/kpi-engine-dashboard.tsx
 // Zivira_Project_Basic.docx Topic 14 — KPI Engine
 //
-// Representative KPIs: Doctors Visited, Calls Completed, DCR Submitted,
-// Products Promoted, Samples Distributed, Conversion Rate.
-// Manager KPIs: Joint Calls, Coverage %, Team Compliance, Doctor Coverage,
-// Manager Effectiveness.
+// Representative KPIs: Doctors Visited, DCR Submitted, Products Promoted,
+// Samples Distributed, Conversion Rate (proxy: % of visits with HIGH/
+// MEDIUM prescription interest), Compliance %.
+// Manager KPIs: Joint Call %, Team Compliance %, Doctor Coverage %,
+// Manager Effectiveness Score. Field names match src/utils/kpi-engine.ts
+// (RepKpiRow / ManagerKpiRow) exactly.
 //
 // New file — purely additive, does not touch any existing component.
 import { Gauge, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type ManagerKpi, type RepKpi } from "@/lib/api-client";
 
 export function KpiEngineDashboard() {
@@ -42,7 +45,10 @@ export function KpiEngineDashboard() {
           <h2>KPI Engine</h2>
           <p>Automatically calculated Representative and Manager KPIs for the current month.</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
@@ -50,18 +56,18 @@ export function KpiEngineDashboard() {
       <div className="subdivision-table-card" style={{ marginBottom: 28 }}>
         <table className="subdivision-table">
           <thead>
-            <tr><th>Representative</th><th>Doctors Visited</th><th>Calls Completed</th><th>DCR Submitted</th><th>Products Promoted</th><th>Samples Distributed</th><th>Conversion Rate</th></tr>
+            <tr><th>Representative</th><th>Doctors Visited</th><th>DCR Submitted</th><th>Products Promoted</th><th>Samples Distributed</th><th>Conversion Rate</th><th>Compliance %</th></tr>
           </thead>
           <tbody>
             {reps.map((r) => (
               <tr key={r.employeeCode}>
-                <td><strong style={{ color: "var(--ink)" }}>{r.name ?? r.employeeCode}</strong></td>
+                <td><strong style={{ color: "var(--ink)" }}>{r.employeeName ?? r.employeeCode}</strong></td>
                 <td>{r.doctorsVisited}</td>
-                <td>{r.callsCompleted}</td>
                 <td>{r.dcrSubmitted}</td>
                 <td>{r.productsPromoted}</td>
                 <td>{r.samplesDistributed}</td>
-                <td>{r.conversionRate != null ? `${r.conversionRate}%` : "—"}</td>
+                <td>{r.conversionRatePercent}%</td>
+                <td style={{ fontWeight: 700, color: r.compliancePercent < 70 ? "#b91c1c" : r.compliancePercent < 90 ? "#a16207" : "#15803d" }}>{r.compliancePercent}%</td>
               </tr>
             ))}
             {!loading && reps.length === 0 && (
@@ -75,17 +81,17 @@ export function KpiEngineDashboard() {
       <div className="subdivision-table-card">
         <table className="subdivision-table">
           <thead>
-            <tr><th>Manager</th><th>Joint Calls</th><th>Coverage %</th><th>Team Compliance %</th><th>Doctor Coverage</th><th>Manager Effectiveness</th></tr>
+            <tr><th>Manager</th><th>Team Size</th><th>Joint Call %</th><th>Team Compliance %</th><th>Doctor Coverage %</th><th>Manager Effectiveness</th></tr>
           </thead>
           <tbody>
             {managers.map((m) => (
-              <tr key={m.employeeCode}>
-                <td><strong style={{ color: "var(--ink)" }}>{m.name ?? m.employeeCode}</strong></td>
-                <td>{m.jointCalls}</td>
-                <td>{m.coveragePercent}%</td>
+              <tr key={m.managerCode}>
+                <td><strong style={{ color: "var(--ink)" }}>{m.managerName ?? m.managerCode}</strong></td>
+                <td>{m.teamSize}</td>
+                <td>{m.jointCallPercent}%</td>
                 <td>{m.teamCompliancePercent}%</td>
-                <td>{m.doctorCoverage ?? "—"}</td>
-                <td>{m.managerEffectiveness != null ? `${m.managerEffectiveness}%` : "—"}</td>
+                <td>{m.doctorCoveragePercent}%</td>
+                <td style={{ fontWeight: 700 }}>{m.managerEffectivenessScore}%</td>
               </tr>
             ))}
             {!loading && managers.length === 0 && (

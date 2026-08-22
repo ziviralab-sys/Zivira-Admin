@@ -2,15 +2,16 @@
 // components/alerts-notification-engine.tsx
 // Zivira_Project_Basic.docx Topic 15 — Alert & Notification Engine
 //
-// Automated alert examples from the doc: DCR Not Submitted, Doctor Not
-// Visited for 90 Days, Product Not Promoted, Low Coverage, Sample Stock
-// Low, Salary Hold, Territory Inactive. This view is a read surface over
-// the already-computed /company/analytics/alerts feed, grouped by
-// severity exactly as the doc implies (a severity-ranked notification list).
+// Automated alert types from the doc, all computed server-side (src/utils/
+// alerts-engine.ts): DCR Not Submitted, Doctor Not Visited 90 Days,
+// Product Not Promoted, Low Coverage, Sample Stock Low, Salary Hold,
+// Territory Inactive. Field names (type/severity/message/subjectCode/
+// subjectLabel) match the backend's Alert type exactly.
 //
 // New file — purely additive, does not touch any existing component.
 import { AlertTriangle, Bell, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type AlertRow } from "@/lib/api-client";
 
 const SEVERITY_STYLE: Record<string, { bg: string; color: string }> = {
@@ -49,7 +50,10 @@ export function AlertsNotificationEngine() {
           <h2>Alert &amp; Notification Engine</h2>
           <p>DCR gaps, unvisited doctors, low coverage, low sample stock, and salary holds — surfaced automatically, ranked by severity.</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
@@ -68,11 +72,11 @@ export function AlertsNotificationEngine() {
             {alerts.map((a, i) => {
               const sc = SEVERITY_STYLE[a.severity] ?? SEVERITY_STYLE.LOW;
               return (
-                <tr key={`${a.type}-${i}`}>
+                <tr key={`${a.type}-${a.subjectCode ?? i}`}>
                   <td><span style={{ background: sc.bg, color: sc.color, borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}><Bell size={11} /> {a.severity}</span></td>
                   <td style={{ fontSize: 12, color: "var(--muted)" }}>{a.type.replace(/_/g, " ")}</td>
                   <td>{a.message}</td>
-                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{a.employeeCode ?? a.productCode ?? a.doctorId ?? "—"}</td>
+                  <td style={{ fontSize: 12, color: "var(--muted)" }}>{a.subjectLabel ?? a.subjectCode ?? "—"}</td>
                 </tr>
               );
             })}

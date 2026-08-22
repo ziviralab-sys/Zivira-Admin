@@ -11,6 +11,7 @@
 // New file — purely additive, does not touch any existing component.
 import { Lock, RefreshCw, Unlock } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type PayrollStatusRow } from "@/lib/api-client";
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
@@ -62,7 +63,10 @@ export function PayrollHoldEngine() {
           <h2>Payroll — Compliance Hold Queue</h2>
           <p>Employee -&gt; No DCR -&gt; HR Notification -&gt; Employee Explanation -&gt; Manager Approval -&gt; Payroll Released.</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 

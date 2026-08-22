@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 
 const MODULES: { title: string; description: string; href: string; icon: LucideIcon; group: string }[] = [
   { title: "Attendance & Compliance Analytics", description: "DCR submission discipline + Chronic Defaulter detection", href: "/admin/analytics/compliance", icon: ShieldCheck, group: "Employee Reports" },
@@ -40,6 +41,7 @@ export function BiAnalyticsHub() {
           <h2>Analytics &amp; BI Center</h2>
           <p>Every DCR-driven analytics module from the SFA/CRM Analytics + BI requirements — DCR compliance, payroll integration, field coaching, product and territory intelligence, and the executive rollup.</p>
         </div>
+        <BackButton fallback="/admin/home" />
       </div>
 
       {GROUPS.map((group) => {

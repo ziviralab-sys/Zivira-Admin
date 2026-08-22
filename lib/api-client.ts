@@ -794,9 +794,12 @@ export const apiClient = {
     return request<SampleAllocationRow>("/company/sample-allocations", { method: "POST", body: JSON.stringify(input) });
   },
 
-  // Topic 11/12 — Sample Distribution + Sample vs Doctor Input Analysis
+  // Topic 11/12 — Sample Distribution + Sample vs Doctor Input Analysis.
+  // Backend shape is NOT the standard {data: T[]} envelope — it spreads
+  // computeSampleDistribution()'s own {byRep, byProduct, byDoctor, totals}
+  // straight onto the response, so this is typed to match exactly.
   sampleDistribution(month?: string) {
-    return fetchRaw<{ data: SampleDistributionRow[]; month: string }>(`/company/analytics/sample-distribution${month ? `?month=${month}` : ""}`);
+    return fetchRaw<SampleDistributionReport>(`/company/analytics/sample-distribution${month ? `?month=${month}` : ""}`);
   },
 
   // Topic 14 — KPI Engine
@@ -810,14 +813,19 @@ export const apiClient = {
   }
 };
 
-// ── Response shapes for the analytics endpoints above. Defined locally
-// (rather than in @zivira/types, which is shared across every portal) so
-// this purely-additive BI layer can never affect any other app's build. ──
+// ── Response shapes for the analytics endpoints above. Field names below
+// are copied verbatim from the backend's own row types (src/utils/
+// compliance.ts, rep-manager-analysis.ts, product-analytics.ts, sample-
+// distribution.ts, kpi-engine.ts, alerts-engine.ts) — not guessed — so the
+// UI renders exactly what the server computes. Defined locally (rather
+// than in @zivira/types, which is shared across every portal) so this
+// purely-additive BI layer can never affect any other app's build. ──
 export type ComplianceRow = {
-  employeeCode: string; employeeName?: string; name?: string; role?: string;
+  employeeCode: string; employeeName?: string; role?: string;
   submittedToday: boolean; pendingDCR: boolean; missedYesterday: boolean;
-  missedThisWeek: number; missedThisMonth: number; compliancePercent: number;
-  chronicDefaulter: boolean; missedDaysIn30: number;
+  missedThisWeek: number; missedThisMonth: number; expectedThisMonth: number; submittedThisMonth: number;
+  compliancePercent: number; missedLast30Days: number; chronicDefaulter: boolean;
+  warningLevel: "NONE" | "LOW" | "MEDIUM" | "HIGH"; salaryHold: boolean;
 };
 export type PayrollStatusRow = {
   id: string; employeeCode: string; employeeName?: string; role?: string; month: string;
@@ -826,12 +834,12 @@ export type PayrollStatusRow = {
   employeeExplanation?: string | null; managerApprovedByName?: string | null; releasedAt?: string | null;
 };
 export type RepAnalysisRow = {
-  employeeCode: string; name: string; reportingManager?: string; reportingManagerName?: string;
-  doctorsVisited: number; managerJointVisits: number; coveragePercent: number;
+  employeeCode: string; employeeName?: string; reportingManager?: string | null; reportingManagerName?: string;
+  doctorsVisited: number; totalVisits: number; jointVisits: number; jointVisitPercent: number;
 };
 export type ManagerJointWorkRow = {
-  managerCode: string; managerName?: string; totalJointCalls: number; averageJointCalls: number;
-  jointCallPercent: number; teamSize: number; rank?: number;
+  managerCode: string; managerName?: string; teamSize: number; totalTeamVisits: number;
+  totalJointCalls: number; avgJointCallsPerRep: number; jointCallPercent: number; rank: number;
 };
 export type TerritoryCoverageRow = DoctorCoverageRow & {
   assignedMRName?: string | null;
@@ -843,30 +851,38 @@ export type TerritoryCoverageRow = DoctorCoverageRow & {
   exceptionMonth?: string | null;
 };
 export type ProductExposureRow = {
-  productCode?: string; productName: string; doctorsCovered: number; samplesGiven: number;
-  prescriptionInterestHigh?: number; prescriptionInterestMedium?: number; prescriptionInterestLow?: number;
-  topRepresentative?: string; topRegion?: string;
+  productCode: string; productName: string; totalSamplesGiven: number; visitsPromoted: number;
+  distinctDoctors: number; distinctReps: number; visualAidUsedCount: number;
+  topRepCode?: string; topRepName?: string; topRepQty?: number;
+  topTerritory?: string; topTerritoryQty?: number;
+  topManagerCode?: string; topManagerName?: string; topManagerQty?: number;
+  prescriptionInterestHigh: number; prescriptionInterestMedium: number;
+  prescriptionInterestLow: number; prescriptionInterestNone: number;
 };
 export type SampleAllocationRow = {
   id: string; allocationId: string; employeeCode: string; employeeName?: string;
   productCode: string; productName: string; batchNumber?: string | null; qtyIssued: number; month: string;
   issuedBy?: string | null; notes?: string | null; createdAt?: string;
 };
-export type SampleDistributionRow = {
-  productCode?: string; productName: string; totalIssued: number; totalDistributed: number; remaining: number;
-  doctorWise?: { doctorId: string; doctorName?: string; qty: number }[];
+export type RepSampleBalanceRow = { employeeCode: string; employeeName?: string; totalIssued: number; totalDistributed: number; totalRemaining: number };
+export type DoctorSampleRow = { doctorId: string; doctorName: string; totalSamplesReceived: number };
+export type ProductSampleRow = { productCode: string; productName: string; totalIssued: number; totalDistributed: number; totalRemaining: number };
+export type SampleDistributionReport = {
+  byRep: RepSampleBalanceRow[]; byProduct: ProductSampleRow[]; byDoctor: DoctorSampleRow[];
+  totals: { totalIssued: number; totalDistributed: number; totalRemaining: number };
+  month: string;
 };
 export type RepKpi = {
-  employeeCode: string; name?: string; doctorsVisited: number; callsCompleted: number;
-  dcrSubmitted: number; productsPromoted: number; samplesDistributed: number; conversionRate?: number;
+  employeeCode: string; employeeName?: string; doctorsVisited: number; dcrSubmitted: number;
+  productsPromoted: number; samplesDistributed: number; conversionRatePercent: number; compliancePercent: number;
 };
 export type ManagerKpi = {
-  employeeCode: string; name?: string; jointCalls: number; coveragePercent: number;
-  teamCompliancePercent: number; doctorCoverage?: number; managerEffectiveness?: number;
+  managerCode: string; managerName?: string; teamSize: number; jointCallPercent: number;
+  teamCompliancePercent: number; doctorCoveragePercent: number; managerEffectivenessScore: number;
 };
 export type AlertRow = {
-  type: string; severity: "HIGH" | "MEDIUM" | "LOW"; message: string;
-  employeeCode?: string; doctorId?: string; productCode?: string; createdAt?: string;
+  type: "DCR_NOT_SUBMITTED" | "DOCTOR_NOT_VISITED_90_DAYS" | "PRODUCT_NOT_PROMOTED" | "LOW_COVERAGE" | "SAMPLE_STOCK_LOW" | "SALARY_HOLD" | "TERRITORY_INACTIVE";
+  severity: "HIGH" | "MEDIUM" | "LOW"; message: string; subjectCode?: string; subjectLabel?: string;
 };
 
 async function fetchRaw<T>(path: string): Promise<T> {

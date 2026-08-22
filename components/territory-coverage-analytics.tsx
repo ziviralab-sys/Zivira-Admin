@@ -13,6 +13,7 @@
 // New file — purely additive, does not touch any existing component.
 import { AlertOctagon, Filter, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 import { apiClient, type TerritoryCoverageRow } from "@/lib/api-client";
 
 const BUCKET_LABEL: Record<string, string> = {
@@ -62,7 +63,10 @@ export function TerritoryCoverageAnalytics() {
           <h2>Territory Coverage &amp; Doctor Exceptions</h2>
           <p>Doctors not visited for extended periods, with the documented reason (if the field team logged one) so nothing reads as unexplained neglect.</p>
         </div>
-        <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BackButton fallback="/admin/analytics" />
+          <button className="button button-secondary" onClick={load} type="button"><RefreshCw size={15} />{loading ? "Loading" : "Refresh"}</button>
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
 
