@@ -719,5 +719,24 @@ export const apiClient = {
 
   setGiftValueThreshold(value: number) {
     return request<{ key: string; value: number }>("/company/config/GIFT_VALUE_THRESHOLD_RS", { method: "PATCH", body: JSON.stringify({ value }) });
+  },
+
+  // ── Generic company-config store — GET /company/config returns every
+  // stored key merged with the server's DEFAULT_CONFIG as one object, so
+  // this same read also picks up any custom key (e.g. Work Type Wise -
+  // Allowance Fix's per-level grids below), not just the gift threshold.
+  // The PATCH route's Zod validator only accepts number/string/boolean
+  // values, so a value that isn't one of those must be JSON.stringify'd by
+  // the caller before calling setCompanyConfig, and JSON.parse'd back after
+  // companyConfig() returns it.
+  companyConfig() {
+    return request<Record<string, unknown>>("/company/config");
+  },
+
+  setCompanyConfig(key: string, value: string | number | boolean) {
+    return request<{ key: string; value: string | number | boolean }>(`/company/config/${encodeURIComponent(key)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ value })
+    });
   }
 };

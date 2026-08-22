@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Plus, Pencil, Ban, Download, X, AlertTriangle, FileText, Sheet } from "lucide-react";
+import { Plus, Pencil, Ban, Download, X, AlertTriangle, FileText, Sheet } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { apiClient, type MasterField, type MasterRecord, type MasterSchema } from "@/lib/api-client";
@@ -80,6 +80,33 @@ function computeNextCode(field: MasterField, rows: MasterRecord[]): string {
 
   const next = maxForBestPrefix + 1;
   return `${bestPrefix}${String(next).padStart(bestPadWidth, "0")}`;
+}
+
+// The Doctor — Additional Info map preview used to fetch a picture from a
+// third-party static-map service (staticmap.openstreetmap.de). That's an
+// external network call on every render — when it was slow, rate-limited,
+// or simply unreachable, the onError handler hid the <img>, so the box
+// looked like it "disappeared" after a while even though the location was
+// still saved. This draws the location "picture" locally as an inline SVG
+// data URI instead — a pin + the captured coordinates — so the box always
+// renders instantly and never depends on an outside service being up.
+function locationPreviewDataUri(lat: unknown, lon: unknown): string {
+  const latNum = Number(lat);
+  const lonNum = Number(lon);
+  const latText = Number.isFinite(latNum) ? latNum.toFixed(5) : String(lat ?? "");
+  const lonText = Number.isFinite(lonNum) ? lonNum.toFixed(5) : String(lon ?? "");
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">` +
+    `<rect width="320" height="180" fill="#fdf0e4"/>` +
+    `<g stroke="#f2d3b6" stroke-width="1">` +
+    `<line x1="0" y1="45" x2="320" y2="45"/><line x1="0" y1="90" x2="320" y2="90"/><line x1="0" y1="135" x2="320" y2="135"/>` +
+    `<line x1="80" y1="0" x2="80" y2="180"/><line x1="160" y1="0" x2="160" y2="180"/><line x1="240" y1="0" x2="240" y2="180"/>` +
+    `</g>` +
+    `<path d="M160 62c-16 0-29 13-29 29 0 22 29 51 29 51s29-29 29-51c0-16-13-29-29-29z" fill="#ea580c"/>` +
+    `<circle cx="160" cy="91" r="10" fill="#fff7ed"/>` +
+    `<text x="160" y="158" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#7c2d12">${latText}, ${lonText}</text>` +
+    `</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 const exportMenuOptionStyle: CSSProperties = {
@@ -516,24 +543,31 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       if (!hasLocation) {
         return <span style={{ color: "var(--muted)", fontSize: "12px" }}>No location sent</span>;
       }
-      const mapImgSrc = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=110x70&markers=${lat},${lon},red-pushpin`;
+      const mapImgSrc = locationPreviewDataUri(lat, lon);
       const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
       return (
-        <a href={mapLink} target="_blank" rel="noopener noreferrer" title="Open location in map" style={{ display: "inline-block", lineHeight: 0 }}>
+        <a href={mapLink} target="_blank" rel="noopener noreferrer" title="Open this exact location in a map" style={{ display: "inline-block", lineHeight: 0 }}>
           <img
             src={mapImgSrc}
-            alt="Location map"
+            alt="Captured location"
             width={110}
             height={70}
             style={{ borderRadius: "6px", border: "1px solid var(--line)", objectFit: "cover" }}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </a>
       );
     }
     const raw = f.computed ? computedValueFor(f, row) : row[f.key];
     if (isActiveInactiveField(f)) {
-      const text = String(raw ?? "").trim();
+      // Masters whose registry entry doesn't declare its own status field
+      // (e.g. Doctor — Dealer Mapping) get a synthetic Active/Inactive
+      // column appended above, but older records saved before that column
+      // existed have no `status` key at all — row[f.key] is undefined, so
+      // this rendered a blank cell instead of a pill. New rows already
+      // default to "Active" on save (see openAddForm); treat a genuinely
+      // unset value the same way here so every row shows a real status
+      // instead of nothing.
+      const text = String(raw ?? "").trim() || "Active";
       const isActive = text.toUpperCase() === "ACTIVE";
       const isInactive = text.toUpperCase() === "INACTIVE";
       if (isActive || isInactive) {
@@ -630,7 +664,16 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
 
   function openEditForm(row: MasterRecord) {
     setLocationError(null);
-    setFormRow({ ...row });
+    const next: Record<string, unknown> = { ...row };
+    // Same "no status ever saved on this old record" gap as the table
+    // display — default it to Active here too so Edit opens with a real
+    // selection instead of a blank dropdown.
+    for (const f of schema?.fields ?? []) {
+      if (isActiveInactiveField(f) && !String(next[f.key] ?? "").trim()) {
+        next[f.key] = "Active";
+      }
+    }
+    setFormRow(next);
   }
 
   async function saveForm() {
@@ -870,7 +913,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                 <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{isEdit ? `Edit ${schema.title}` : `Add ${schema.title}`}</h2>
                 <button className="button button-secondary" onClick={() => setFormRow(null)} type="button">
-                  <RotateCcw size={16} /> Close
+                  Close
                 </button>
               </div>
               <div className="subdivision-form-card" style={{ boxShadow: "none", padding: 0 }}>
@@ -881,7 +924,19 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                   // get its own separate field row in the form.
                   .filter((f: any) => !(masterKey === "doctorAdditionalInfo" && f.key === "longitude"))
                   .map((f: MasterField) => {
-                  const opts = optionsFor(f);
+                  let opts = optionsFor(f);
+                  // Doctor — Additional Info's Doctor Code field lists every
+                  // doctor from Doctor Master, but this master's own keyField
+                  // is doctorCode — one Additional Info record per doctor. Add
+                  // was offering doctors who already had a record, so picking
+                  // one and saving always 409'd with "A record with this
+                  // doctorCode already exists". On Add, narrow the list to
+                  // doctors that don't have an Additional Info record yet; on
+                  // Edit, keep the row's own already-assigned code selectable.
+                  if (masterKey === "doctorAdditionalInfo" && f.key === "doctorCode" && opts && !isEdit) {
+                    const taken = new Set(rows.map((r) => String((r as any).doctorCode)));
+                    opts = opts.filter((code) => !taken.has(code));
+                  }
                   const commonStyle: CSSProperties = {
                     width: "100%", padding: "8px 12px", borderRadius: "6px",
                     border: "1px solid #e5e7eb", outline: "none", fontSize: "14px", background: "var(--panel)"
@@ -891,9 +946,7 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                     const lon = formRow["longitude"];
                     const hasLocation = lat !== undefined && lat !== null && String(lat).trim() !== "" &&
                       lon !== undefined && lon !== null && String(lon).trim() !== "";
-                    const mapImgSrc = hasLocation
-                      ? `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=15&size=460x160&markers=${lat},${lon},red-pushpin`
-                      : "";
+                    const mapImgSrc = hasLocation ? locationPreviewDataUri(lat, lon) : "";
                     return (
                       <label className="field" key="map-box" style={{ display: "block", marginBottom: "12px" }}>
                         <span style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 500 }}>
@@ -916,7 +969,6 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
                               src={mapImgSrc}
                               alt="Captured location"
                               style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }}
-                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                             />
                           ) : (
                             <div style={{ height: "160px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px", color: "var(--muted)", fontSize: "13px" }}>

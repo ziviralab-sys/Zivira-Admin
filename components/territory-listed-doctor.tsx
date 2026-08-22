@@ -2,7 +2,7 @@
 import { ColumnFilterDropdown } from "@/components/column-filter-dropdown";
 import { StatusFilterDropdown } from "@/components/status-filter-dropdown";
 
-import { Check, Plus, RotateCcw, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
+import { Check, Plus, SlidersHorizontal, Trash2, Pencil, ChevronDown, Ban } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient, type PaginationInfo } from "@/lib/api-client";
 import { PaginationControls } from "./pagination-controls";
@@ -216,7 +216,7 @@ export function TerritoryListedDoctor() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{view === "add" ? "Map Doctor to Territory" : "Edit Territory Mapping"}</h2>
               <button className="button button-secondary" onClick={() => setView("list")} type="button">
-                <RotateCcw size={16} /> Close
+                Close
               </button>
             </div>
             
