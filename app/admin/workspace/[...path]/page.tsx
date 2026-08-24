@@ -89,11 +89,30 @@ export default async function AdminWorkspacePage({ params }: { params: Promise<{
     notFound();
   }
 
+  // Item 4 — "the datas must be save in the admin portal with the exact
+  // headers and field." Every Daily MR Work / Manager Activity Report leaf
+  // tab (Attendance, DCR, Tour Plan, Expense, Leaves, Camp, Market Survey,
+  // and their Manager Activity Report counterparts + Doctor/Chemist
+  // Coverage + Productivity Dashboard) is already routed by
+  // AdminDrilldown to a real <GenericMasterTable> backed by its own
+  // registry entry in the backend's masters/registry.ts (real MongoDB
+  // collection, real Add/Edit/Deactivate CRUD, real column headers) — the
+  // generic "Working modern page..." copy below was left over from before
+  // that wiring existed and made a fully working table look like an
+  // unwired stub. Leaf tabs (no children) get an accurate description
+  // instead; the two hub pages (the card grids themselves) keep the
+  // original copy since it's still true of the module as a whole.
+  const isWiredLeaf = !node.children?.length && (pathStr.includes("daily-mr-work/") || pathStr.includes("manager-activity-report/"));
+
   return (
     <>
       <PageHeader
         title={node.title}
-        description="Working modern page for this exact architecture tab. Data CRUD can be wired to its MongoDB collection."
+        description={
+          isWiredLeaf
+            ? `Live data — every row is saved to MongoDB via the ${node.title} collection. Add, edit, and deactivate records below.`
+            : "Working modern page for this exact architecture tab. Data CRUD can be wired to its MongoDB collection."
+        }
         action={<BackButton fallback="/admin/home" />}
       />
       <AdminDrilldown node={node} path={path} />
