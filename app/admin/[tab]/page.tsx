@@ -1,4 +1,3 @@
-#The admin portal
 import { notFound } from "next/navigation";
 import { AdminTabGrid } from "@/components/admin-tab-grid";
 import { AdminHomeDashboard } from "@/components/admin-home-dashboard";
