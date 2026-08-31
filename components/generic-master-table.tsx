@@ -749,6 +749,142 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
     setFormRow(next);
   }
 
+  // Creates or updates a single master collection's record, with the same
+  // stale-code retry behavior the form has always had. Pulled out of
+  // saveForm() so the Doctor Master special case below (which has to run
+  // this same create/update dance against 4 separate collections instead
+  // of 1) can reuse it instead of duplicating it.
+  async function upsertGenericRecord(
+    masterKeyToUse: string,
+    existingId: string | undefined,
+    payload: Record<string, unknown>,
+    codeField: MasterField | null
+  ) {
+    if (existingId) {
+      await apiClient.updateMasterRecord(masterKeyToUse, existingId, payload);
+      return payload;
+    }
+    const originalCode = codeField ? payload[codeField.key] : undefined;
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      try {
+        await apiClient.createMasterRecord(masterKeyToUse, payload);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        const isCodeConflict = err instanceof Error && /already exists/i.test(err.message);
+        const codeIsAutoFilled = (codeField && payload[codeField.key] === originalCode) || (codeField && attempt > 0);
+        if (!isCodeConflict || !codeField || !codeIsAutoFilled) break;
+        const fresh = await apiClient.masterRecords(masterKeyToUse);
+        const takenCodes = new Set(
+          fresh.data
+            .map((r) => r[codeField.key])
+            .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+        );
+        let retryCode = computeNextCode(codeField, fresh.data);
+        let guard = 0;
+        while (takenCodes.has(retryCode) && guard < 200) {
+          const match = String(retryCode).match(/^(.*?)(\d+)$/);
+          if (!match) break;
+          retryCode = `${match[1]}${String(parseInt(match[2], 10) + 1).padStart(match[2].length, "0")}`;
+          guard++;
+        }
+        payload[codeField.key] = retryCode;
+      }
+    }
+    if (lastErr) throw lastErr;
+    return payload;
+  }
+
+  // The Doctor Master screen (division-master/doctor/category) displays one
+  // merged row per doctor, but that row is actually joined client-side (in
+  // load(), above) from 4 separate backend collections — doctorMaster,
+  // doctorClassification, doctorMapping, and doctorAdditionalInfo — matched
+  // on doctorCode. Saving used to send the whole merged form to the
+  // doctorMaster collection alone: fields that actually belong to the other
+  // 3 collections (e.g. Potential/Visit Frequency, Area Manager, DOB/
+  // Anniversary/Remarks/Latitude/Longitude) never reached a collection that
+  // stores them. On Add, that left those columns permanently blank (no
+  // classification/mapping/additionalInfo row was ever created to join
+  // against); on Edit, changes to those fields looked accepted in the form
+  // but were silently dropped since the PATCH only ever touched the
+  // doctorMaster document. This splits the payload by which collection's
+  // schema actually declares each field (fetched live, so it can't drift
+  // out of sync with the backend) and upserts all 4 collections, keyed by
+  // doctorCode, so every tab's data actually persists and shows up.
+  async function saveDoctorMasterForm(payload: Record<string, unknown>) {
+    const SUB_MASTERS = ["doctorClassification", "doctorMapping", "doctorAdditionalInfo"] as const;
+    const [docRes, classRes, mapRes, addlRes, classRecordsRes, mapRecordsRes, addlRecordsRes] = await Promise.all([
+      apiClient.masterSchema("doctorMaster"),
+      apiClient.masterSchema("doctorClassification"),
+      apiClient.masterSchema("doctorMapping"),
+      apiClient.masterSchema("doctorAdditionalInfo"),
+      apiClient.masterRecords("doctorClassification"),
+      apiClient.masterRecords("doctorMapping"),
+      apiClient.masterRecords("doctorAdditionalInfo")
+    ]);
+    const docKeys = new Set(docRes.data.fields.map((f) => f.key));
+    const subKeySets: Record<(typeof SUB_MASTERS)[number], Set<string>> = {
+      doctorClassification: new Set(classRes.data.fields.map((f) => f.key)),
+      doctorMapping: new Set(mapRes.data.fields.map((f) => f.key)),
+      doctorAdditionalInfo: new Set(addlRes.data.fields.map((f) => f.key))
+    };
+    const subRecordsByKey: Record<(typeof SUB_MASTERS)[number], MasterRecord[]> = {
+      doctorClassification: classRecordsRes.data,
+      doctorMapping: mapRecordsRes.data,
+      doctorAdditionalInfo: addlRecordsRes.data
+    };
+
+    // Bucket every submitted field by whichever collection's schema owns
+    // it — doctorMaster's own fields win first (matching the precedence
+    // load() already uses when it joins the 4 collections into one row),
+    // then classification, then mapping, then additional info. Anything
+    // that isn't declared by any of the 4 (e.g. a client-side-only display
+    // field) falls back to doctorMaster, which is the pre-existing
+    // behavior for those and not something this fix needs to change.
+    const docPayload: Record<string, unknown> = {};
+    const subPayloads: Record<(typeof SUB_MASTERS)[number], Record<string, unknown>> = {
+      doctorClassification: {},
+      doctorMapping: {},
+      doctorAdditionalInfo: {}
+    };
+    for (const [key, value] of Object.entries(payload)) {
+      if (key === "id") continue;
+      if (docKeys.has(key)) {
+        docPayload[key] = value;
+      } else if (subKeySets.doctorClassification.has(key)) {
+        subPayloads.doctorClassification[key] = value;
+      } else if (subKeySets.doctorMapping.has(key)) {
+        subPayloads.doctorMapping[key] = value;
+      } else if (subKeySets.doctorAdditionalInfo.has(key)) {
+        subPayloads.doctorAdditionalInfo[key] = value;
+      } else {
+        docPayload[key] = value;
+      }
+    }
+
+    const codeField = docRes.data.keyFields.length === 1
+      ? docRes.data.fields.find((f) => f.key === docRes.data.keyFields[0]) ?? null
+      : null;
+    await upsertGenericRecord("doctorMaster", formRow?.id ? String(formRow.id) : undefined, docPayload, codeField);
+
+    const doctorCode = docPayload.doctorCode ?? payload.doctorCode;
+    if (!doctorCode) return; // shouldn't happen — doctorMaster always has a doctorCode — but don't orphan sub-records if it somehow does
+
+    await Promise.all(
+      SUB_MASTERS.map(async (subKey) => {
+        const subPayload = { ...subPayloads[subKey], doctorCode };
+        const existing = subRecordsByKey[subKey].find((r) => String(r.doctorCode ?? "") === String(doctorCode));
+        if (existing) {
+          await apiClient.updateMasterRecord(subKey, String(existing.id), subPayload);
+        } else {
+          await apiClient.createMasterRecord(subKey, subPayload);
+        }
+      })
+    );
+  }
+
   async function saveForm() {
     if (!formRow) return;
     setSaving(true);
@@ -760,54 +896,12 @@ export function GenericMasterTable({ masterKey }: { masterKey: string }) {
       for (const f of schema!.fields) {
         if (f.computed) payload[f.key] = computedValueFor(f, formRow);
       }
-      if (formRow.id) {
+      if (masterKey === "doctorMaster") {
+        await saveDoctorMasterForm(payload);
+      } else if (formRow.id) {
         await apiClient.updateMasterRecord(effectiveMasterKey, String(formRow.id), payload);
       } else {
-        const codeField = autoCodeField();
-        const originalCode = codeField ? payload[codeField.key] : undefined;
-        let lastErr: unknown = null;
-        // The auto-suggested code can go stale if the list we computed it
-        // from wasn't the latest (another save landed in between, two tabs
-        // open, months of prior test data piled up, etc). Rather than
-        // surface a scary "already exists" error for something the user
-        // didn't even type in themselves, re-fetch and retry with a bumped
-        // code. Each retry checks the *actual* set of taken codes from the
-        // fresh fetch and keeps bumping until it lands on one that isn't in
-        // that set, instead of trusting a single recomputation — a set that
-        // has accumulated many stale/duplicate codes over repeated testing
-        // can otherwise make computeNextCode land on an already-taken value
-        // more than once in a row and exhaust a small retry budget.
-        for (let attempt = 0; attempt < 20; attempt++) {
-          try {
-            await apiClient.createMasterRecord(effectiveMasterKey, payload);
-            lastErr = null;
-            break;
-          } catch (err) {
-            lastErr = err;
-            const isCodeConflict = err instanceof Error && /already exists/i.test(err.message);
-            const codeIsAutoFilled = codeField && payload[codeField.key] === originalCode || (codeField && attempt > 0);
-            if (!isCodeConflict || !codeField || !codeIsAutoFilled) break;
-            const fresh = await apiClient.masterRecords(effectiveMasterKey);
-            const takenCodes = new Set(
-              fresh.data
-                .map((r) => r[codeField.key])
-                .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
-            );
-            let retryCode = computeNextCode(codeField, fresh.data);
-            // Keep bumping the trailing number until it's a code we know
-            // for certain isn't already taken, rather than trusting a
-            // single recomputation to have jumped far enough ahead.
-            let guard = 0;
-            while (takenCodes.has(retryCode) && guard < 200) {
-              const match = String(retryCode).match(/^(.*?)(\d+)$/);
-              if (!match) break;
-              retryCode = `${match[1]}${String(parseInt(match[2], 10) + 1).padStart(match[2].length, "0")}`;
-              guard++;
-            }
-            payload[codeField.key] = retryCode;
-          }
-        }
-        if (lastErr) throw lastErr;
+        await upsertGenericRecord(effectiveMasterKey, undefined, payload, autoCodeField());
       }
       // The save itself succeeded at this point — close the form regardless
       // of what happens next. Previously, a transient failure in the list
